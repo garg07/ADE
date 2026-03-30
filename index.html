@@ -553,8 +553,8 @@
   <h1>Azure Data Engineer<br><span>Interview Mastery</span></h1>
   <p class="hero-sub">// 6.6 yrs exp · Databricks · ADF · PySpark · Python · SQL · Targeting high-pay roles</p>
   <div class="hero-stats">
-    <div class="stat"><div class="stat-num">90+</div><div class="stat-label">Questions</div></div>
-    <div class="stat"><div class="stat-num">6</div><div class="stat-label">Topic Areas</div></div>
+    <div class="stat"><div class="stat-num">160+</div><div class="stat-label">Questions</div></div>
+    <div class="stat"><div class="stat-num">9</div><div class="stat-label">Topic Areas</div></div>
     <div class="stat"><div class="stat-num">4</div><div class="stat-label">Roadmap Phases</div></div>
     <div class="stat"><div class="stat-num">2026</div><div class="stat-label">Updated</div></div>
   </div>
@@ -564,6 +564,7 @@
   <button class="nav-btn active" onclick="showSection('roadmap', this)">📍 Roadmap</button>
   <button class="nav-btn" onclick="showSection('qbank', this)">🧠 Question Bank</button>
   <button class="nav-btn" onclick="showSection('scenario', this)">🎯 Scenario Qs</button>
+  <button class="nav-btn" onclick="showSection('ai', this)">🤖 AI / GenAI Qs</button>
   <button class="nav-btn" onclick="showSection('checklist', this)">✅ Checklist</button>
   <button class="nav-btn" onclick="showSection('salary', this)">💰 Salary & Tips</button>
   <button class="nav-btn" onclick="showSection('resources', this)">📚 Resources</button>
@@ -1354,7 +1355,1935 @@ for processed_row in process_rows(large_df):
     </div>
   </div>
 
+
+  <!-- AUTO LOADER -->
+  <div class="q-category" data-cat="databricks">
+    <div class="q-cat-title">⚡ Databricks — Auto Loader, Workflows & Advanced</div>
+    <div class="q-list">
+
+      <div class="q-item" data-tags="mid databricks trending">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q24</span>
+          <span class="q-text">What is Auto Loader in Databricks? How is it different from COPY INTO?</span>
+          <div class="q-badges"><span class="badge badge-mid">Mid</span><span class="badge badge-trending">🔥 Trending</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Auto Loader</strong> incrementally and efficiently processes new data files as they arrive in cloud storage (ADLS/S3) using Structured Streaming — without manually tracking which files were processed.
+
+<strong>How it works:</strong> Uses file notification (Event Grid + Queue) or directory listing mode to detect new files. Stores progress in a checkpoint so no file is processed twice.
+<div class="code-block">df = spark.readStream.format("cloudFiles") \
+  .option("cloudFiles.format", "json") \
+  .option("cloudFiles.schemaLocation", "/mnt/schema/orders") \
+  .load("/mnt/raw/orders/")
+
+df.writeStream.format("delta") \
+  .option("checkpointLocation", "/mnt/checkpoints/orders") \
+  .trigger(availableNow=True) \  # Batch-style trigger
+  .start("/mnt/delta/orders")</div>
+
+<strong>Auto Loader vs COPY INTO:</strong>
+• Auto Loader = streaming ingestion, scales to billions of files, ideal for continuous arrival
+• COPY INTO = idempotent batch SQL command, simpler, good for scheduled batch loads of moderate file counts</div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv databricks trending">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q25</span>
+          <span class="q-text">What are Databricks Asset Bundles (DABs)? Why are they replacing legacy CI/CD approaches?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span><span class="badge badge-trending">🔥 Hot 2026</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Databricks Asset Bundles (DABs)</strong> are a YAML-based framework for defining, deploying, and managing Databricks resources (jobs, pipelines, notebooks, clusters) as code.
+
+<strong>Why they're replacing ARM/manual CI/CD:</strong>
+• Infrastructure as code: define jobs, DLT pipelines, permissions in YAML
+• Multi-environment support: dev/staging/prod configs in one bundle
+• Native Databricks CLI integration (`databricks bundle deploy`)
+• Supports Git-based workflows natively
+• Simpler than ARM templates for Databricks-specific resources
+
+<div class="code-block"># databricks.yml
+bundle:
+  name: my_etl_project
+targets:
+  dev:
+    workspace:
+      host: https://adb-xxx.azuredatabricks.net
+  prod:
+    workspace:
+      host: https://adb-yyy.azuredatabricks.net
+resources:
+  jobs:
+    daily_etl:
+      name: "Daily ETL Job"
+      tasks:
+        - task_key: transform
+          notebook_task:
+            notebook_path: ./notebooks/transform.py</div>
+<div class="tip-box">🔥 Senior interviews in 2026 are asking about DABs as the modern CI/CD standard for Databricks. Know this well.</div></div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv databricks">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q26</span>
+          <span class="q-text">What is Lakehouse Federation in Databricks? When would you use it?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span><span class="badge badge-trending">🔥 Trending</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Lakehouse Federation</strong> (powered by Unity Catalog) allows you to query external data sources — like Snowflake, BigQuery, MySQL, PostgreSQL, Azure SQL — directly from Databricks without copying data.
+
+<strong>Architecture:</strong> Unity Catalog registers a "foreign catalog" pointing to the external system. You query it with standard SQL as if it were a native Delta table.
+
+<strong>Use cases:</strong>
+• Join Delta Lake tables with Snowflake data in one query
+• Avoid ETL for reference/lookup tables that live in operational DBs
+• Governance-first access to external systems via Unity Catalog permissions
+
+<div class="code-block">-- Create external connection (admin step)
+CREATE CONNECTION snowflake_prod
+TYPE snowflake
+OPTIONS (host '...', user '...', sfWarehouse 'COMPUTE_WH');
+
+-- Create foreign catalog
+CREATE FOREIGN CATALOG snowflake_sales
+USING CONNECTION snowflake_prod
+OPTIONS (database 'SALES_DB');
+
+-- Query across systems
+SELECT d.*, s.revenue
+FROM delta.silver.customers d
+JOIN snowflake_sales.public.sales s ON d.id = s.customer_id;</div></div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv databricks">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q27</span>
+          <span class="q-text">What is Databricks Serverless compute? What are its trade-offs vs classic clusters?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Serverless compute</strong> in Databricks means no cluster provisioning — Databricks manages the compute infrastructure fully. Instant startup (no 3–5 min cluster spin-up).
+
+<strong>Available for:</strong> SQL Warehouses (serverless), Databricks Jobs (serverless), Notebooks (preview)
+
+<strong>Advantages:</strong>
+• Zero cold start — queries execute in seconds
+• No cluster management overhead
+• Pay-per-use (DBUs consumed, not idle time)
+• Scales instantly up and down
+
+<strong>Trade-offs:</strong>
+• Less control over Spark config tuning (can't set spark.sql.shuffle.partitions freely)
+• Data must be in approved cloud storage — no on-prem connectivity
+• Potentially higher cost for long-running heavy workloads vs optimized dedicated clusters
+• Not available in all regions yet
+
+<strong>Best for:</strong> Interactive SQL analytics, BI dashboards, short-running jobs. Use classic clusters for long-running ML training or highly tuned ETL pipelines.</div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv databricks">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q28</span>
+          <span class="q-text">Explain Change Data Capture (CDC) using Delta Lake. What are the approaches?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>CDC (Change Data Capture)</strong> captures row-level changes (INSERT, UPDATE, DELETE) from source systems and propagates them to the data lake incrementally.
+
+<strong>Approach 1 — MERGE-based CDC:</strong>
+Source sends a CDC feed (from Debezium/Kafka/Event Hubs) with operation type. Use Delta MERGE to apply changes.
+<div class="code-block">MERGE INTO silver.customers AS t
+USING cdc_feed AS s ON t.customer_id = s.customer_id
+WHEN MATCHED AND s.op = 'D' THEN DELETE
+WHEN MATCHED AND s.op = 'U' THEN UPDATE SET *
+WHEN NOT MATCHED AND s.op = 'I' THEN INSERT *</div>
+
+<strong>Approach 2 — Delta Change Data Feed (CDF):</strong>
+Delta's built-in CDC — tracks changes in a Delta table itself.
+<div class="code-block">-- Enable CDF on table
+ALTER TABLE silver.orders SET TBLPROPERTIES (delta.enableChangeDataFeed = true);
+
+-- Read changes between versions
+SELECT * FROM table_changes('silver.orders', 5, 10)
+WHERE _change_type IN ('insert', 'update_postimage')</div>
+
+<strong>Use CDF</strong> for downstream consumers that need to know what changed in a Delta table (e.g., incremental Gold layer refresh).</div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv databricks">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q29</span>
+          <span class="q-text">What is the Databricks Feature Store? How does it integrate with ML pipelines?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Databricks Feature Store</strong> is a centralized repository for storing, sharing, and reusing ML features across teams and models.
+
+<strong>Key benefits for data engineers:</strong>
+• Single source of truth for features — no feature recomputation across teams
+• Point-in-time correctness — prevents training-serving skew
+• Lineage tracking — know which pipelines produce which features
+• Integrated with MLflow for model training
+
+<strong>Typical workflow:</strong>
+<div class="code-block">from databricks.feature_store import FeatureStoreClient
+fs = FeatureStoreClient()
+
+# Create feature table from your pipeline output
+fs.create_table(
+    name="ml.customer_features",
+    primary_keys=["customer_id"],
+    df=feature_df,
+    description="Customer behavioral features for churn model"
+)
+
+# Write features (as part of your ETL job)
+fs.write_table(name="ml.customer_features", df=feature_df, mode="merge")
+
+# Training with feature lookup (automatic join at train time)
+training_set = fs.create_training_set(
+    df=labels_df,
+    feature_lookups=[FeatureLookup(table_name="ml.customer_features", lookup_key="customer_id")],
+    label="is_churned"
+)</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MORE ADF -->
+  <div class="q-category" data-cat="adf">
+    <div class="q-cat-title">🔄 ADF — Advanced & Frequently Asked</div>
+    <div class="q-list">
+
+      <div class="q-item" data-tags="adv adf">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q30</span>
+          <span class="q-text">What is the difference between ADF Data Flows and Copy Activity? When do you choose which?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Copy Activity:</strong> Simple, fast data movement between source and sink. No transformation capability (beyond basic column mapping). Uses Azure IR or Self-hosted IR. Very efficient for bulk data movement.
+
+<strong>Data Flows (Mapping Data Flow):</strong> Visual, codeless transformation engine built on Spark. Supports joins, aggregations, lookups, conditional splits, derived columns. Runs on auto-provisioned Spark clusters (has warm-up overhead ~1–2 min).
+
+<strong>Decision guide:</strong>
+• Pure data movement (source → sink, same schema) → Copy Activity (faster, cheaper)
+• Need transformations (filter, join, aggregate, pivot) → Data Flow
+• Complex SQL transformations at scale → Use ADF to invoke Databricks notebook (better performance than Data Flows for complex logic)
+• Production ETL at scale → ADF orchestrates Databricks jobs (ADF = orchestrator, Databricks = transformer)
+
+<div class="tip-box">🔥 Common interview answer: "I use ADF Copy Activity for ingestion into Bronze, then trigger a Databricks notebook for Silver/Gold transformations — not Data Flows, because Databricks gives more control and performance."</div></div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv adf">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q31</span>
+          <span class="q-text">How do you pass parameters dynamically in ADF pipelines? Give an example.</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>ADF supports parameterization at multiple levels:</strong>
+
+1. <strong>Pipeline parameters:</strong> Define at pipeline level, pass when triggering
+2. <strong>Dynamic content expressions:</strong> Use @{} syntax with pipeline functions
+3. <strong>Global parameters:</strong> Defined at factory level, accessible across all pipelines
+
+<strong>Example — Dynamic source path:</strong>
+<div class="code-block">// Pipeline parameter: p_date (string)
+// In Copy Activity Source dataset path:
+@concat('/mnt/raw/orders/', pipeline().parameters.p_date, '/data.parquet')
+
+// In Linked Service connection string (environment-specific):
+@linkedService().storageAccountName
+
+// Trigger with parameters:
+{
+  "parameters": {
+    "p_date": "@trigger().scheduledTime"
+  }
+}</div>
+
+<strong>Best practice:</strong> Parameterize everything — linked service URLs, container names, schema names, date ranges. This is what makes pipelines reusable across environments and historical backfill-ready.</div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv adf trending">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q32</span>
+          <span class="q-text">How do you integrate ADF with Azure ML for automated model retraining pipelines?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span><span class="badge badge-trending">🔥 Trending</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>ADF + Azure ML integration pattern:</strong>
+
+1. <strong>Data prep:</strong> ADF Copy Activity pulls fresh training data → ADLS
+2. <strong>Feature engineering:</strong> ADF triggers Databricks notebook → transforms features → writes to Feature Store
+3. <strong>Model training:</strong> ADF uses "Azure Machine Learning" activity → triggers Azure ML Pipeline run
+4. <strong>Model evaluation:</strong> ADF If-Condition checks model metrics (accuracy > threshold)
+5. <strong>Deployment:</strong> If metrics pass → ADF triggers Azure ML managed endpoint deployment
+
+<div class="code-block">// In ADF "Azure Machine Learning Execute Pipeline" activity:
+{
+  "mlPipelineId": "your-aml-pipeline-id",
+  "experimentName": "churn_model_retraining",
+  "mlPipelineParameters": {
+    "training_data_path": "@variables('trainingDataPath')",
+    "model_version": "@pipeline().RunId"
+  }
+}</div>
+
+<strong>Alternative:</strong> ADF triggers Databricks job → MLflow experiment run → registers model in MLflow registry → Azure ML picks up registered model for serving.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MORE SQL -->
+  <div class="q-category" data-cat="sql">
+    <div class="q-cat-title">🗄️ SQL — More Patterns & Advanced</div>
+    <div class="q-list">
+
+      <div class="q-item" data-tags="adv sql">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q33</span>
+          <span class="q-text">Write a query to identify and deduplicate records keeping only the latest version.</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><div class="code-block">-- Method 1: ROW_NUMBER deduplication (most common)
+WITH deduped AS (
+  SELECT *,
+    ROW_NUMBER() OVER (
+      PARTITION BY customer_id
+      ORDER BY updated_at DESC
+    ) AS rn
+  FROM raw_customers
+)
+SELECT * EXCEPT(rn) FROM deduped WHERE rn = 1;
+
+-- Method 2: Qualify (Databricks/Snowflake SQL)
+SELECT * FROM raw_customers
+QUALIFY ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY updated_at DESC) = 1;
+
+-- Method 3: Delta MERGE-based dedup at write time
+MERGE INTO silver.customers t
+USING (
+  SELECT * FROM (
+    SELECT *, ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY updated_at DESC) rn
+    FROM bronze.customers WHERE date = current_date()
+  ) WHERE rn = 1
+) s ON t.customer_id = s.customer_id
+WHEN MATCHED THEN UPDATE SET *
+WHEN NOT MATCHED THEN INSERT *</div></div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv sql">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q34</span>
+          <span class="q-text">Explain the gaps and islands problem. Write a SQL solution.</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Gaps and Islands:</strong> Identify consecutive sequences (islands) and breaks (gaps) in ordered data. Common for: detecting consecutive login days, continuous active sessions, consecutive date ranges.
+<div class="code-block">-- Find consecutive active days for each user
+WITH numbered AS (
+  SELECT
+    user_id,
+    active_date,
+    active_date - INTERVAL (ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY active_date)) DAYS AS grp
+  FROM user_activity
+),
+islands AS (
+  SELECT
+    user_id,
+    MIN(active_date) AS streak_start,
+    MAX(active_date) AS streak_end,
+    COUNT(*) AS streak_length
+  FROM numbered
+  GROUP BY user_id, grp
+)
+SELECT * FROM islands
+WHERE streak_length >= 7  -- Users with 7+ consecutive active days
+ORDER BY streak_length DESC;</div></div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="mid sql">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q35</span>
+          <span class="q-text">What is query partition pruning in Delta Lake? How do you ensure it's being used?</span>
+          <div class="q-badges"><span class="badge badge-mid">Mid</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Partition pruning</strong> = Spark skips reading partitions that don't satisfy the filter condition. Drastically reduces I/O for partitioned tables.
+
+<strong>How to ensure it works:</strong>
+• Filter on the partition column with an exact value or range (not a function that wraps the column)
+• Check Spark UI → SQL tab → "Files pruned" stat
+<div class="code-block">-- ✅ GOOD — pruning happens (filter on partition col directly)
+SELECT * FROM orders WHERE order_date = '2025-12-01'
+
+-- ❌ BAD — no pruning (function wraps partition column)
+SELECT * FROM orders WHERE YEAR(order_date) = 2025
+
+-- Fix the bad query:
+SELECT * FROM orders WHERE order_date BETWEEN '2025-01-01' AND '2025-12-31'</div>
+
+<strong>Delta-specific:</strong> Delta also uses data skipping via column statistics in the transaction log — even within a partition, Delta can skip individual files where min/max stats exclude the filter value.</div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv sql">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q36</span>
+          <span class="q-text">Write a recursive CTE to traverse a hierarchical employee-manager table.</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><div class="code-block">-- employees(id, name, manager_id)
+-- Find entire reporting chain under a given manager
+
+WITH RECURSIVE hierarchy AS (
+  -- Anchor: start with the top manager
+  SELECT id, name, manager_id, 0 AS level
+  FROM employees
+  WHERE id = 1  -- CEO or root node
+
+  UNION ALL
+
+  -- Recursive: join children to parent
+  SELECT e.id, e.name, e.manager_id, h.level + 1
+  FROM employees e
+  JOIN hierarchy h ON e.manager_id = h.id
+)
+SELECT
+  id, name, manager_id, level,
+  REPEAT('  ', level) || name AS org_chart
+FROM hierarchy
+ORDER BY level, name;</div>
+<strong>Note:</strong> Databricks SQL supports recursive CTEs as of DBR 13+. For older runtimes, implement iteratively with loops or use a graph library.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- AZURE ADVANCED -->
+  <div class="q-category" data-cat="azure">
+    <div class="q-cat-title">☁️ Azure — Microsoft Fabric, Synapse & Advanced</div>
+    <div class="q-list">
+
+      <div class="q-item" data-tags="adv azure trending">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q37</span>
+          <span class="q-text">What is Microsoft Fabric? How does it relate to Azure Synapse and Databricks?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span><span class="badge badge-trending">🔥 Hot 2026</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Microsoft Fabric</strong> is Microsoft's all-in-one analytics SaaS platform launched in 2023, converging multiple Azure analytics tools into one unified experience.
+
+<strong>What's in Fabric:</strong>
+• Data Factory (pipelines) — same ADF-style pipelines
+• Synapse Data Engineering — Spark notebooks & jobs (Delta Lake)
+• Synapse Data Warehouse — SQL-based DW (direct lake mode)
+• Real-Time Intelligence (formerly Synapse Real-Time Analytics / KQL)
+• Power BI — embedded BI
+• Data Science (ML experiments, MLflow)
+• OneLake — single unified storage layer (like Azure Data Lake)
+
+<strong>How it compares:</strong>
+• Fabric vs Synapse: Fabric IS the evolution of Synapse Analytics — same tech, better UX, SaaS model
+• Fabric vs Databricks: Both use Delta/Parquet on lake storage. Fabric is Microsoft-native, tighter Power BI integration. Databricks is more advanced for ML/AI, better Spark optimization, Unity Catalog governance.
+• Many enterprises will use BOTH: Fabric for BI/reporting layer, Databricks for heavy engineering/ML.
+
+<div class="tip-box">🔥 Interviewers now ask: "Are you aware of Microsoft Fabric?" Know OneLake, Direct Lake mode, and how it differs from Databricks.</div></div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv azure">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q38</span>
+          <span class="q-text">What is Azure Purview / Microsoft Purview? How does it complement Unity Catalog?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Microsoft Purview</strong> is Microsoft's enterprise data governance and compliance platform — scans, classifies, and maps data across the entire Azure estate (not just Databricks).
+
+<strong>Key capabilities:</strong>
+• Data Map: automated scanning and cataloging of data assets across Azure services, on-prem, multi-cloud
+• Data Catalog: business glossary, data lineage, search & discovery
+• Data Estate Insights: governance posture dashboards
+• Compliance: sensitivity labels, DLP policies, regulatory compliance
+
+<strong>Purview vs Unity Catalog:</strong>
+• <strong>Unity Catalog:</strong> Governance WITHIN Databricks — table-level access control, column masking, row filters, lineage within Databricks
+• <strong>Purview:</strong> Enterprise-wide governance ACROSS the entire data estate (Azure SQL, ADLS, on-prem, Databricks, Salesforce etc.)
+• They complement each other: Unity Catalog handles Databricks-native governance; Purview provides the enterprise-wide data catalog and compliance layer</div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="mid azure">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q39</span>
+          <span class="q-text">Explain the difference between Managed Identity and Service Principal for Azure authentication in pipelines.</span>
+          <div class="q-badges"><span class="badge badge-mid">Mid</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Service Principal:</strong> An Azure AD application identity. Requires creating an app registration, generating client secret or certificate. You manage the secret rotation. Used when service doesn't support managed identity.
+
+<strong>Managed Identity:</strong> An Azure AD identity automatically managed by Azure — no credentials to store or rotate. Tied to the Azure resource (VM, ADF, Databricks cluster).
+
+<strong>Types of Managed Identity:</strong>
+• System-assigned: tied to resource lifecycle (deleted when resource is deleted)
+• User-assigned: standalone identity, assignable to multiple resources
+
+<strong>Best practice for pipelines:</strong>
+<div class="code-block"># In Databricks — use Managed Identity for ADLS access
+# 1. Assign "Storage Blob Data Contributor" role to Databricks Managed Identity on ADLS
+# 2. In notebook, no credentials needed:
+df = spark.read.format("delta").load("abfss://container@account.dfs.core.windows.net/path")
+# Azure handles auth transparently via MSI token</div>
+
+<strong>Rule:</strong> Always prefer Managed Identity over Service Principal when available — no secret management overhead, no rotation risk.</div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv azure">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q40</span>
+          <span class="q-text">How do you optimize costs in a Databricks + ADF data platform on Azure?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Databricks cost optimization:</strong>
+• Use <strong>Spot/Preemptible VMs</strong> for worker nodes (save 60–90%) — only use on-demand for driver
+• Enable <strong>auto-termination</strong> on interactive clusters (10–30 min idle timeout)
+• Use <strong>cluster pools</strong> to pre-warm VMs — reduces startup time without keeping cluster running
+• Choose right VM family: memory-optimized (Standard_E series) for joins, compute-optimized (Standard_F) for CPU-intensive
+• Use <strong>Photon engine</strong> for SQL workloads (3–12x faster = fewer DBUs consumed)
+• Use <strong>serverless SQL warehouses</strong> for ad-hoc queries (no idle cost)
+
+<strong>ADF cost optimization:</strong>
+• Prefer Azure IR over Self-hosted for cloud-to-cloud (no VM cost)
+• Use pipeline triggers smartly (avoid over-scheduling)
+• For Data Flows: use TTL (time-to-live) cluster reuse to avoid re-provisioning Spark cluster per run
+
+<strong>Storage optimization:</strong>
+• Run OPTIMIZE + VACUUM regularly on Delta tables (reduces small files = faster queries = fewer DBUs)
+• Use lifecycle policies on ADLS to archive old Bronze data to cool/archive tier</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MORE PYSPARK -->
+  <div class="q-category" data-cat="pyspark">
+    <div class="q-cat-title">🐍 PySpark — More Advanced Patterns</div>
+    <div class="q-list">
+
+      <div class="q-item" data-tags="adv pyspark">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q41</span>
+          <span class="q-text">What is the Catalyst Optimizer? How does it optimize your PySpark queries?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Catalyst</strong> is Spark SQL's query optimizer — it automatically rewrites and optimizes your DataFrame/SQL queries before execution.
+
+<strong>4 phases of Catalyst:</strong>
+1. <strong>Analysis:</strong> Resolves column names, types from catalog
+2. <strong>Logical Optimization:</strong> Applies rules — predicate pushdown (move filters early), constant folding, column pruning (SELECT only needed columns)
+3. <strong>Physical Planning:</strong> Generates multiple physical plans (sort-merge vs broadcast join), picks the cheapest using cost model
+4. <strong>Code Generation:</strong> Tungsten engine generates bytecode for execution
+
+<strong>Practical implications:</strong>
+<div class="code-block"># Catalyst auto-optimizes this (moves filter before join):
+df = large_df.join(other_df, "id").filter(col("date") > "2025-01-01")
+# Same as writing:
+df = large_df.filter(col("date") > "2025-01-01").join(other_df, "id")
+
+# But Catalyst CAN'T optimize Python UDFs — they're black boxes
+# Prefer native Spark functions over UDFs for optimizer visibility</div>
+
+<strong>Key takeaway:</strong> Write declarative, clean DataFrame code — Catalyst will optimize the execution. Avoid Python UDFs on hot paths.</div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv pyspark">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q42</span>
+          <span class="q-text">What is the small file problem in Delta Lake? How do you fix it?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Small file problem:</strong> When many small Parquet files accumulate in a Delta table (from frequent streaming writes, many small batch loads), query performance degrades because Spark must open/read thousands of files — high metadata overhead.
+
+<strong>Detection:</strong>
+<div class="code-block">DESCRIBE DETAIL my_table
+-- Look at "numFiles" — if thousands, you have small file problem</div>
+
+<strong>Fix — OPTIMIZE command:</strong>
+<div class="code-block">-- Compact small files into target size ~128MB
+OPTIMIZE my_table
+
+-- With Z-ordering (combine compaction + co-location)
+OPTIMIZE my_table ZORDER BY (customer_id, event_date)
+
+-- Schedule as daily Databricks job for production tables</div>
+
+<strong>Prevention at write time:</strong>
+<div class="code-block"># Control output file size when writing
+df.repartition(10).write.format("delta").save(path)  # Fewer, larger files
+
+# For streaming: use trigger(processingTime="10 minutes") to batch writes
+# or trigger(availableNow=True) for micro-batch runs</div>
+
+<strong>VACUUM:</strong> After OPTIMIZE, run VACUUM to delete the old small files and free storage.</div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv pyspark">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q43</span>
+          <span class="q-text">Explain Pandas UDF (Vectorized UDF) in PySpark. When should you use it over regular UDF?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Regular Python UDF:</strong> Serializes each row to Python, processes one row at a time, returns to JVM. Very slow — Python ↔ JVM serialization overhead per row.
+
+<strong>Pandas UDF (Vectorized UDF):</strong> Uses Apache Arrow to transfer batches of data as Pandas Series/DataFrame between JVM and Python. Processes a whole batch at once. 10–100x faster than regular UDFs.
+<div class="code-block">from pyspark.sql.functions import pandas_udf
+import pandas as pd
+
+# Scalar Pandas UDF — takes Series, returns Series
+@pandas_udf("double")
+def normalize_score(series: pd.Series) -> pd.Series:
+    return (series - series.mean()) / series.std()
+
+df.withColumn("normalized", normalize_score(col("raw_score")))
+
+# Group Map Pandas UDF — apply custom logic per group
+from pyspark.sql.functions import PandasUDFType
+
+@pandas_udf(schema, PandasUDFType.GROUPED_MAP)
+def forecast_group(pdf: pd.DataFrame) -> pd.DataFrame:
+    # Run statsmodels/sklearn per group
+    return run_forecast(pdf)
+
+df.groupBy("store_id").apply(forecast_group)</div>
+
+<strong>Use Pandas UDF when:</strong> You need Pandas/NumPy/sklearn logic that has no native Spark equivalent. Still prefer native Spark functions where available.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DEVOPS & TESTING -->
+  <div class="q-category" data-cat="devops">
+    <div class="q-cat-title">🛠️ DevOps, Testing & Data Quality</div>
+    <div class="q-list">
+
+      <div class="q-item" data-tags="adv devops trending">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q44</span>
+          <span class="q-text">How do you unit test PySpark / Databricks code? What frameworks do you use?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span><span class="badge badge-trending">🔥 Trending</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Testing strategy for Databricks pipelines:</strong>
+
+<strong>1. Unit tests with pytest + local Spark:</strong>
+<div class="code-block">import pytest
+from pyspark.sql import SparkSession
+from my_module.transformations import clean_orders
+
+@pytest.fixture(scope="session")
+def spark():
+    return SparkSession.builder.master("local[2]").getOrCreate()
+
+def test_clean_orders_removes_nulls(spark):
+    input_data = [(1, None, 100.0), (2, "electronics", 50.0)]
+    df = spark.createDataFrame(input_data, ["id", "category", "amount"])
+    result = clean_orders(df)
+    assert result.count() == 1  # Null category removed
+    assert result.filter("amount < 0").count() == 0</div>
+
+<strong>2. Great Expectations / Databricks DQ:</strong> Validate data contracts between pipeline stages
+
+<strong>3. Databricks nutter:</strong> Run notebooks as integration tests in CI pipeline
+
+<strong>4. dbt tests</strong> (if using dbt): schema tests, custom SQL tests on transformed tables
+
+<strong>CI integration:</strong> Run pytest in GitHub Actions / Azure DevOps on PR before deploying to prod. Use Databricks Connect or Delta Sharing for integration tests against real data.</div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv devops">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q45</span>
+          <span class="q-text">What is dbt (data build tool)? How does it fit into a Databricks-based stack?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span><span class="badge badge-trending">🔥 Trending</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>dbt</strong> is a transformation framework — you write SQL SELECT statements, and dbt handles materialization (tables, views, incremental models), testing, documentation, and lineage.
+
+<strong>dbt in Databricks stack:</strong>
+• dbt runs SQL transformations directly on Databricks SQL warehouse or cluster
+• Replaces hand-written Python scripts for Silver/Gold layer SQL transformations
+• Built-in testing: unique, not_null, accepted_values, relationships
+• Auto-generates data documentation and lineage DAG
+• dbt Cloud or dbt Core (self-hosted) integrates with Azure DevOps
+
+<div class="code-block">-- models/silver/silver_orders.sql
+-- dbt incremental model (only processes new records)
+{{ config(materialized='incremental', unique_key='order_id') }}
+
+SELECT
+  order_id,
+  customer_id,
+  CAST(order_date AS DATE) AS order_date,
+  SUM(line_amount) AS total_amount
+FROM {{ source('bronze', 'raw_orders') }}
+{% if is_incremental() %}
+  WHERE order_date > (SELECT MAX(order_date) FROM {{ this }})
+{% endif %}
+GROUP BY 1, 2, 3</div>
+
+<strong>Where it fits:</strong> ADF/Auto Loader → Bronze (Delta) → dbt models → Silver/Gold (Delta) → Power BI</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MORE DATABRICKS -->
+  <div class="q-category" data-cat="databricks">
+    <div class="q-cat-title">⚡ Databricks — Advanced & Trending (2026)</div>
+    <div class="q-list">
+
+      <div class="q-item" data-tags="adv databricks trending">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q24</span>
+          <span class="q-text">What is Auto Loader in Databricks? How does it compare to a regular readStream?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span><span class="badge badge-trending">🔥 Trending</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Auto Loader</strong> is Databricks' optimized file ingestion mechanism for streaming new files from cloud storage (ADLS/S3/GCS) incrementally and automatically.
+
+<strong>Why Auto Loader over plain readStream?</strong>
+• <strong>Scalability:</strong> Uses a notification service (Event Grid + Queue Storage) or directory listing — doesn't scan the entire folder every trigger
+• <strong>File tracking:</strong> Tracks processed files in a checkpoint — never reprocesses old files
+• <strong>Schema inference:</strong> Auto-infers and evolves schema across files
+• <strong>Millions of files:</strong> Handles millions of files efficiently; standard readStream degrades
+
+<div class="code-block">df = (spark.readStream
+  .format("cloudFiles")
+  .option("cloudFiles.format", "json")
+  .option("cloudFiles.schemaLocation", "/mnt/schema/orders")
+  .load("/mnt/landing/orders/")
+)
+df.writeStream.format("delta").option("checkpointLocation", "/mnt/ckpt/orders").start("/mnt/delta/orders")</div>
+<div class="tip-box">🔥 Auto Loader is the standard way to ingest into Bronze layer in Medallion architecture. Expect this in almost every senior interview.</div></div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv databricks trending">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q25</span>
+          <span class="q-text">What are Databricks Asset Bundles (DAB)? Why are they replacing legacy deployment methods?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span><span class="badge badge-trending">🔥 Trending</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Databricks Asset Bundles (DAB)</strong> is the modern CI/CD framework for Databricks — define all workspace assets (jobs, pipelines, notebooks, clusters) as YAML code and deploy them like infrastructure-as-code.
+
+<strong>Why it replaces legacy methods (dbx, REST API scripts, manual UI):</strong>
+• Version-controlled YAML defines jobs, DLT pipelines, clusters
+• Supports dev/staging/prod environments with variable substitution
+• Integrates natively with GitHub Actions, Azure DevOps
+• Validates and deploys consistently — no manual config drift
+
+<div class="code-block"># databricks.yml example
+bundle:
+  name: etl_pipeline
+resources:
+  jobs:
+    daily_etl:
+      name: "Daily ETL Job"
+      tasks:
+        - task_key: transform
+          notebook_task:
+            notebook_path: ./notebooks/transform
+      job_clusters:
+        - job_cluster_key: main
+          new_cluster:
+            spark_version: "14.3.x-scala2.12"
+            node_type_id: "Standard_DS3_v2"</div></div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv databricks trending">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q26</span>
+          <span class="q-text">What is the Databricks Feature Store and when would a data engineer use it?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span><span class="badge badge-trending">🔥 Trending</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Databricks Feature Store</strong> is a centralized repository for storing, sharing, and serving ML features — computed once, reused across many models.
+
+<strong>Data Engineer's role:</strong>
+• Build feature pipelines that compute and write features to the Feature Store
+• Ensure features are fresh (incremental updates via Delta MERGE)
+• Govern features using Unity Catalog (catalog.schema.feature_table)
+• Prevent training-serving skew: same feature logic runs at training AND inference time
+<div class="code-block">from databricks.feature_store import FeatureStoreClient
+fs = FeatureStoreClient()
+
+# Create/update feature table
+fs.write_table(
+    name="ml_catalog.features.customer_lifetime",
+    df=computed_features_df,
+    mode="merge"
+)
+
+# Use in model training
+training_set = fs.create_training_set(
+    df=labels_df,
+    feature_lookups=[FeatureLookup(table_name="...", lookup_key="customer_id")],
+    label="churn"
+)</div>
+<div class="tip-box">Expect this question at product companies that combine DE + ML workflows.</div></div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv databricks">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q27</span>
+          <span class="q-text">What is Lakehouse Federation in Databricks? When would you use it?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Lakehouse Federation</strong> allows Databricks to query external databases (Snowflake, Redshift, BigQuery, MySQL, PostgreSQL, Azure SQL) directly through Unity Catalog — without copying data.
+
+<strong>Architecture:</strong> Create a Connection object → Register foreign catalog → Query external tables using standard SQL
+
+<div class="code-block">-- Create a connection to Snowflake
+CREATE CONNECTION snowflake_prod
+TYPE SNOWFLAKE
+OPTIONS (
+  host = 'abc.snowflakecomputing.com',
+  user = secret('scope', 'sf_user'),
+  password = secret('scope', 'sf_pass')
+);
+
+-- Register external catalog
+CREATE FOREIGN CATALOG snowflake_catalog
+USING CONNECTION snowflake_prod
+OPTIONS (database = 'PROD_DB');
+
+-- Query directly
+SELECT * FROM snowflake_catalog.sales.orders WHERE date = '2026-01-01';</div>
+
+<strong>Use cases:</strong> Cross-platform analytics, gradual migration, avoid data duplication while consolidating governance.</div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="mid databricks">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q28</span>
+          <span class="q-text">What is the Photon Engine in Databricks? When does it help most?</span>
+          <div class="q-badges"><span class="badge badge-mid">Mid</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Photon</strong> is Databricks' native C++ vectorized query engine that replaces the JVM-based Spark executor for SQL workloads. It processes batches of column values at a time (vectorized) rather than row-by-row.
+
+<strong>Performance gains:</strong> 2–8x faster for ETL and SQL-heavy workloads. Better CPU utilization. Reduced memory pressure.
+
+<strong>When Photon helps most:</strong>
+• Wide table scans with filters and aggregations
+• Heavy JOIN operations
+• ORDER BY + GROUP BY on large datasets
+• ETL workloads with lots of SQL transformations
+
+<strong>When Photon doesn't help:</strong>
+• Python UDFs (runs on JVM, bypasses Photon)
+• ML workloads (training loops, custom Python code)
+
+<strong>How to enable:</strong> Select a Photon-enabled runtime (e.g., 14.x-photon-scala2.12) when creating a cluster. No code changes required.
+
+<div class="tip-box">Replacing Python UDFs with native Spark SQL functions is one of the best ways to leverage Photon.</div></div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv databricks">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q29</span>
+          <span class="q-text">Explain VACUUM in Delta Lake. What happens if you run it too aggressively?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>VACUUM</strong> removes old data files from a Delta table that are no longer referenced by the transaction log and older than the retention threshold (default: 7 days).
+
+<div class="code-block">-- Default: removes files older than 7 days
+VACUUM my_delta_table;
+
+-- Custom retention (minimum 7 days enforced by default)
+VACUUM my_delta_table RETAIN 168 HOURS;  -- 7 days
+
+-- DRY RUN to see what would be deleted
+VACUUM my_delta_table DRY RUN;</div>
+
+<strong>What goes wrong with aggressive VACUUM:</strong>
+• If you reduce retention below 7 days AND have active readers/writers, you risk deleting files still in use → data corruption
+• It <strong>breaks time travel</strong> beyond the retention period — you can't restore to those versions
+• For long-running Structured Streaming jobs that may lag, reduce VACUUM frequency or increase retention to match max lag
+
+<strong>Best practice:</strong> Keep default 7-day retention. Run VACUUM weekly as a Databricks job after OPTIMIZE.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MORE ADF -->
+  <div class="q-category" data-cat="adf">
+    <div class="q-cat-title">🔄 ADF — Advanced Topics</div>
+    <div class="q-list">
+
+      <div class="q-item" data-tags="mid adf">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q30</span>
+          <span class="q-text">What is the difference between Copy Activity and Mapping Data Flows in ADF?</span>
+          <div class="q-badges"><span class="badge badge-mid">Mid</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Copy Activity:</strong> Moves data from source to sink. No complex transformations. Very fast for bulk loads. Runs on ADF's managed compute (no Spark cluster needed).
+Best for: ingestion — copying from SQL Server → ADLS, API → Blob, etc.
+
+<strong>Mapping Data Flows:</strong> Visual, code-free transformation engine backed by Spark. Supports joins, aggregations, derived columns, pivots, lookups, conditional splits.
+Best for: ELT transformations inside ADF without leaving to Databricks. Runs on a background Spark cluster (warm-up time ~1 min).
+
+<strong>Performance trade-off:</strong> Copy Activity is faster for pure movement. Data Flows add latency due to Spark startup but enable rich transformations. For large-scale or complex transforms, Databricks notebooks via ADB linked service are preferred over Data Flows.
+
+<div class="tip-box">Rule of thumb: Copy Activity for ingestion, Data Flows for medium complexity transforms, Databricks for heavy transforms.</div></div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv adf">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q31</span>
+          <span class="q-text">How do you dynamically loop over files/tables in ADF using ForEach and Lookup activities?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Pattern: Dynamic multi-table ingestion</strong>
+
+<strong>Step 1 — Lookup Activity:</strong> Query a config table (Azure SQL) that lists all source tables + target paths
+<div class="code-block">-- Config table in Azure SQL
+SELECT table_name, source_schema, target_path FROM pipeline_config WHERE is_active = 1</div>
+
+<strong>Step 2 — ForEach Activity:</strong> Iterates over each row from Lookup output
+• Settings: Items = <code>@activity('LookupTables').output.value</code>
+• Sequential = false (parallel) or true (one by one)
+
+<strong>Step 3 — Inside ForEach — Copy Activity:</strong> Use dynamic expressions
+• Source table: <code>@item().table_name</code>
+• Target path: <code>@concat(item().target_path, '/', formatDateTime(utcNow(), 'yyyy/MM/dd'))</code>
+
+<strong>Pro tip:</strong> Set ForEach batch count (parallel degree) to 5–10 to avoid overwhelming the source system.</div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv adf trending">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q32</span>
+          <span class="q-text">How do you securely manage secrets and credentials in ADF pipelines?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span><span class="badge badge-trending">🔥 Trending</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Best practice: Never hardcode credentials in pipelines.</strong>
+
+<strong>Option 1 — Azure Key Vault (recommended):</strong>
+• Store secrets in Key Vault
+• In ADF Linked Service, use "Azure Key Vault" reference instead of inline secret
+• ADF Managed Identity is granted "Key Vault Secrets User" role → no passwords in ADF at all
+
+<strong>Option 2 — Managed Identity:</strong>
+• Assign a system-assigned managed identity to ADF
+• Grant this identity RBAC roles on ADLS, Azure SQL, etc.
+• No credentials at all — Azure handles auth transparently
+
+<strong>Option 3 — Databricks secret scope:</strong>
+<div class="code-block"># In Databricks notebooks called from ADF
+dbutils.secrets.get(scope="kv-scope", key="sql-password")</div>
+
+<strong>Security checklist:</strong>
+• Enable ADF diagnostic logs → Log Analytics
+• Use Private Endpoints for linked services
+• Rotate secrets via Key Vault rotation policies</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MORE SQL -->
+  <div class="q-category" data-cat="sql">
+    <div class="q-cat-title">🗄️ SQL — Advanced Patterns</div>
+    <div class="q-list">
+
+      <div class="q-item" data-tags="adv sql">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q33</span>
+          <span class="q-text">Write a query to detect gaps in a time-series: find all dates where a transaction is missing for an active account.</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><div class="code-block">-- Generate all expected dates for each active account
+WITH date_spine AS (
+  SELECT
+    account_id,
+    EXPLODE(SEQUENCE(
+      TO_DATE('2026-01-01'),
+      TO_DATE('2026-01-31'),
+      INTERVAL 1 DAY
+    )) AS expected_date
+  FROM active_accounts
+),
+actual_txns AS (
+  SELECT DISTINCT account_id, txn_date FROM transactions
+)
+SELECT
+  d.account_id,
+  d.expected_date AS missing_date
+FROM date_spine d
+LEFT JOIN actual_txns a
+  ON d.account_id = a.account_id AND d.expected_date = a.txn_date
+WHERE a.txn_date IS NULL
+ORDER BY d.account_id, d.expected_date;</div>
+<strong>Key technique:</strong> SEQUENCE (Spark SQL) or generate_series (PostgreSQL) to create a date spine, then LEFT JOIN to find NULLs = gaps.</div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv sql">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q34</span>
+          <span class="q-text">How would you deduplicate records in a Delta table that already has duplicates?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Approach 1 — CTAS (Create Table As Select) with ROW_NUMBER:</strong>
+<div class="code-block">-- Keep latest record per natural key
+CREATE OR REPLACE TABLE clean_orders AS
+SELECT * EXCEPT(rn) FROM (
+  SELECT *,
+    ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY updated_at DESC) AS rn
+  FROM raw_orders
+)
+WHERE rn = 1;</div>
+
+<strong>Approach 2 — In-place with replaceWhere (partition-aware):</strong>
+<div class="code-block">deduped = (spark.read.format("delta").load("/mnt/delta/orders")
+  .withColumn("rn", row_number().over(
+      Window.partitionBy("order_id").orderBy(desc("updated_at"))))
+  .filter(col("rn") == 1)
+  .drop("rn")
+)
+deduped.write.format("delta").mode("overwrite") \
+  .option("replaceWhere", "date >= '2026-01-01'") \
+  .save("/mnt/delta/orders")</div>
+
+<strong>Prevention going forward:</strong> Use MERGE with natural key so duplicates can never be inserted in the first place.</div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="mid sql">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q35</span>
+          <span class="q-text">Explain the difference between RANK, DENSE_RANK, and ROW_NUMBER with an example.</span>
+          <div class="q-badges"><span class="badge badge-mid">Mid</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><div class="code-block">-- Scores: 100, 100, 90, 80
+SELECT score,
+  ROW_NUMBER() OVER (ORDER BY score DESC) AS row_num,   -- 1, 2, 3, 4 (always unique)
+  RANK()       OVER (ORDER BY score DESC) AS rnk,       -- 1, 1, 3, 4 (gap after tie)
+  DENSE_RANK() OVER (ORDER BY score DESC) AS dense_rnk  -- 1, 1, 2, 3 (no gap)
+FROM scores;</div>
+
+<strong>Summary:</strong>
+• <strong>ROW_NUMBER:</strong> Always sequential, no ties. Use for deduplication.
+• <strong>RANK:</strong> Ties get same rank, next rank is skipped. Use for leaderboards where you want to show the gap.
+• <strong>DENSE_RANK:</strong> Ties get same rank, no gaps. Use when you want "2nd place" to exist even if two people share 1st.</div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv sql">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q36</span>
+          <span class="q-text">What is a recursive CTE? Write an example to traverse a product category hierarchy.</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><div class="code-block">WITH RECURSIVE category_tree AS (
+  -- Anchor: top-level categories (no parent)
+  SELECT id, name, parent_id, 1 AS depth, CAST(name AS STRING) AS path
+  FROM categories
+  WHERE parent_id IS NULL
+
+  UNION ALL
+
+  -- Recursive: find children
+  SELECT c.id, c.name, c.parent_id, ct.depth + 1, CONCAT(ct.path, ' > ', c.name)
+  FROM categories c
+  INNER JOIN category_tree ct ON c.parent_id = ct.id
+)
+SELECT * FROM category_tree ORDER BY path;</div>
+
+<strong>Use cases in DE:</strong> Org hierarchies, product taxonomies, bill-of-materials, folder/path structures. Note: Databricks SQL supports recursive CTEs from DBR 12.2+.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MORE PYSPARK -->
+  <div class="q-category" data-cat="pyspark">
+    <div class="q-cat-title">🐍 PySpark — More Advanced Patterns</div>
+    <div class="q-list">
+
+      <div class="q-item" data-tags="adv pyspark">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q37</span>
+          <span class="q-text">What are the drawbacks of Python UDFs in PySpark? What are the alternatives?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Python UDF drawbacks:</strong>
+1. <strong>Serialization overhead:</strong> Data must be serialized from JVM (Spark) → Python process → back to JVM for each row
+2. <strong>No Catalyst optimization:</strong> Catalyst optimizer treats UDF as a black box — can't push predicates through it
+3. <strong>Bypasses Photon:</strong> Photon engine can't vectorize Python UDF execution
+4. <strong>Performance:</strong> Often 10–100x slower than equivalent native functions
+
+<strong>Alternatives (in order of preference):</strong>
+<div class="code-block"># 1. Use native Spark SQL functions (fastest, Catalyst-aware)
+from pyspark.sql.functions import regexp_replace, when, col
+df.withColumn("clean", regexp_replace(col("text"), "[^a-zA-Z]", ""))
+
+# 2. Pandas UDF (vectorized, uses Apache Arrow — much faster than row UDF)
+from pyspark.sql.functions import pandas_udf
+import pandas as pd
+
+@pandas_udf("double")
+def normalize(series: pd.Series) -> pd.Series:
+    return (series - series.mean()) / series.std()
+
+df.withColumn("normalized", normalize(col("value")))
+
+# 3. Scala UDF (if team has Scala skills) — runs in JVM, Catalyst-friendly</div></div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="mid pyspark">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q38</span>
+          <span class="q-text">Explain the difference between narrow and wide transformations in Spark.</span>
+          <div class="q-badges"><span class="badge badge-mid">Mid</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Narrow transformations:</strong> Each input partition contributes to exactly ONE output partition. No shuffle. Fast.
+Examples: map, filter, select, withColumn, union
+
+<strong>Wide transformations:</strong> Input partitions may contribute to MULTIPLE output partitions. Causes a shuffle (network data exchange). Expensive — creates a stage boundary.
+Examples: groupBy, join, distinct, repartition, orderBy
+
+<strong>Why it matters:</strong>
+• Shuffles are the #1 performance killer in Spark
+• Minimize wide transformations: filter BEFORE join to reduce shuffle size
+• Each wide transformation = new Spark stage = can be seen in Spark UI
+
+<div class="code-block"># Good: filter first (narrow), then join (wide) → less data shuffled
+df_filtered = large_df.filter(col("date") >= "2026-01-01")  # Narrow
+result = df_filtered.join(dim_df, "key")                     # Wide (smaller shuffle)
+
+# Bad: join first (large shuffle), then filter
+result = large_df.join(dim_df, "key").filter(col("date") >= "2026-01-01")</div></div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv pyspark">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q39</span>
+          <span class="q-text">What is Dynamic Partition Pruning (DPP) in Spark 3.x?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Dynamic Partition Pruning (DPP)</strong> is a Spark 3.x optimization that reduces the amount of data read from a partitioned fact table based on a filter applied to a dimension table — at runtime, not query planning time.
+
+<strong>How it works:</strong>
+1. Query filters dimension table (e.g., WHERE region = 'APAC')
+2. DPP broadcasts the filtered dimension keys to the fact table scan
+3. Fact table only reads partitions that match those keys
+
+<div class="code-block">-- DPP kicks in automatically here if tables are partitioned on region_id
+SELECT f.*, d.region_name
+FROM fact_sales f
+JOIN dim_region d ON f.region_id = d.region_id
+WHERE d.region_name = 'APAC'
+-- Without DPP: scans all fact_sales partitions
+-- With DPP: only reads partitions where region_id IN (APAC keys)</div>
+
+<strong>Requirements:</strong> Spark 3.0+, AQE enabled, tables must be partitioned on the join key.
+<div class="tip-box">DPP can reduce scan by 90%+ on large fact tables with selective dimension filters.</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MORE AZURE -->
+  <div class="q-category" data-cat="azure">
+    <div class="q-cat-title">☁️ Azure — More Services & Architecture</div>
+    <div class="q-list">
+
+      <div class="q-item" data-tags="adv azure trending">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q40</span>
+          <span class="q-text">What is Microsoft Fabric? How does it relate to Azure Synapse and Databricks?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span><span class="badge badge-trending">🔥 2026 Hot</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Microsoft Fabric</strong> is Microsoft's unified SaaS analytics platform (GA'd 2023, rapidly evolving in 2025–26) that combines:
+• Data Factory (pipelines)
+• Data Engineering (Spark notebooks, Lakehouse)
+• Data Warehouse
+• Data Science (ML)
+• Real-Time Intelligence (Event Streams)
+• Power BI
+All on a single tenant with OneLake as shared storage.
+
+<strong>OneLake:</strong> A single logical data lake per org — like a Google Drive for data. Delta/Parquet format under the hood. All Fabric workloads read from the same OneLake.
+
+<strong>vs Databricks:</strong> Fabric is Microsoft-native, SaaS, tightly integrated with M365/Power BI. Databricks is more powerful for complex Spark/ML, multi-cloud, and open ecosystem. Many companies are evaluating both.
+
+<strong>vs Synapse:</strong> Fabric supersedes Synapse Analytics for new workloads. Synapse will continue to exist but new investment is in Fabric.
+
+<div class="tip-box">🔥 Companies are actively evaluating Fabric in 2026. If you can say "I've explored Fabric and understand its OneLake model," you stand out.</div></div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv azure">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q41</span>
+          <span class="q-text">How do you implement CDC (Change Data Capture) from a source SQL database into Delta Lake?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>CDC</strong> captures row-level inserts, updates, deletes from a source database in near real-time.
+
+<strong>Option 1 — ADF + Azure SQL CDC:</strong>
+• Enable CDC on source SQL Server tables
+• ADF reads from CDC change tables (cdc.dbo_orders_CT)
+• Copy to ADLS → Databricks MERGE into Delta
+
+<strong>Option 2 — Debezium + Kafka + Databricks Streaming (enterprise):</strong>
+<div class="code-block">Source DB → Debezium connector → Azure Event Hubs (Kafka API) → Databricks Structured Streaming → Delta MERGE</div>
+
+<strong>Option 3 — Azure Data Factory + Linked Service with watermark:</strong>
+<div class="code-block">-- Track last loaded timestamp in watermark table
+SELECT MAX(updated_at) FROM orders WHERE updated_at > @LastWatermark</div>
+Then copy delta rows, update watermark after successful load.
+
+<strong>Delta MERGE for CDC events:</strong>
+<div class="code-block">MERGE INTO silver_orders AS t
+USING cdc_staging AS s ON t.order_id = s.order_id
+WHEN MATCHED AND s.op = 'D' THEN DELETE
+WHEN MATCHED AND s.op = 'U' THEN UPDATE SET *
+WHEN NOT MATCHED AND s.op = 'I' THEN INSERT *</div></div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="mid azure">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q42</span>
+          <span class="q-text">How does Azure Event Hubs differ from Azure Service Bus? When do you use each for data engineering?</span>
+          <div class="q-badges"><span class="badge badge-mid">Mid</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Azure Event Hubs:</strong> High-throughput event streaming platform (like Kafka). Millions of events/sec. Designed for telemetry, logs, IoT, clickstreams. Message retention: 1–90 days. Multiple consumers can read independently (consumer groups).
+
+<strong>Azure Service Bus:</strong> Enterprise message broker. Supports queues (point-to-point) and topics (pub-sub). Designed for reliable messaging between services. Guarantees delivery order, dead-letter queue, sessions. Lower throughput than Event Hubs.
+
+<strong>Data Engineering use cases:</strong>
+• <strong>Event Hubs:</strong> Ingest high-volume streaming data → Databricks Structured Streaming → Bronze Delta
+• <strong>Service Bus:</strong> Pipeline orchestration signals — e.g., "file ready to process" notification, or triggering ADF runs from application events
+
+<strong>Key difference:</strong> Event Hubs = data streaming at scale. Service Bus = reliable application messaging.</div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv azure">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q43</span>
+          <span class="q-text">How do you monitor and alert on Azure Data pipelines end-to-end?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Multi-layer observability stack:</strong>
+
+<strong>1. ADF Monitoring:</strong>
+• Built-in monitor tab: pipeline run status, duration, activity-level errors
+• Azure Monitor integration: route ADF diagnostic logs to Log Analytics workspace
+• Alert rules: trigger on pipeline failure → Action Group → email/Teams/PagerDuty
+
+<strong>2. Databricks Jobs & Clusters:</strong>
+• Databricks Jobs UI: run history, duration, errors, retries
+• Cluster event logs: OOM, driver failure, spot termination
+• Export logs to ADLS → query with Log Analytics
+
+<strong>3. Data Quality Monitoring:</strong>
+• Write DQ metrics (row counts, null rates) to a Delta "audit" table
+• Power BI dashboard on top of audit table
+• Alert if row count drops >20% vs previous run
+
+<strong>4. Custom alerting pipeline:</strong>
+<div class="code-block"># End of each Databricks job: write run metadata
+audit_log = {
+  "pipeline": "daily_etl", "run_date": today,
+  "rows_processed": count, "duration_min": elapsed,
+  "status": "SUCCESS"
+}
+spark.createDataFrame([audit_log]).write.format("delta").mode("append").save("/mnt/audit")</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MORE PYTHON -->
+  <div class="q-category" data-cat="python">
+    <div class="q-cat-title">🐍 Python — DE Patterns & Best Practices</div>
+    <div class="q-list">
+
+      <div class="q-item" data-tags="mid python">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q44</span>
+          <span class="q-text">How do you structure a production-grade Databricks project? Explain folder/module organization.</span>
+          <div class="q-badges"><span class="badge badge-mid">Mid</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Recommended project structure (using Databricks Repos + Python wheel):</strong>
+<div class="code-block">my_etl_project/
+├── src/
+│   └── my_etl/
+│       ├── __init__.py
+│       ├── config.py          # Environment configs, paths
+│       ├── readers.py         # Data reading utilities
+│       ├── transformers.py    # Business transformation logic
+│       ├── writers.py         # Delta write utilities
+│       └── utils.py           # Logging, error handling, retry decorators
+├── notebooks/
+│   ├── 01_ingest_bronze.py
+│   ├── 02_transform_silver.py
+│   └── 03_aggregate_gold.py
+├── tests/
+│   ├── test_transformers.py
+│   └── conftest.py            # Spark session fixtures
+├── databricks.yml             # DAB config
+├── setup.py
+└── requirements.txt</div>
+
+<strong>Key principles:</strong>
+• Business logic in Python modules (testable without Spark)
+• Notebooks are thin orchestration layers that import from modules
+• Install module as wheel on cluster or use %pip install -e .</div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv python">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">Q45</span>
+          <span class="q-text">How do you write unit tests for PySpark transformations?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Best practice: Test transformation logic separately from infrastructure.</strong>
+<div class="code-block"># conftest.py — shared Spark session for tests
+import pytest
+from pyspark.sql import SparkSession
+
+@pytest.fixture(scope="session")
+def spark():
+    return SparkSession.builder \
+        .master("local[2]") \
+        .appName("unit-tests") \
+        .getOrCreate()
+
+# transformers.py — pure transformation function
+from pyspark.sql.functions import col, upper
+def normalize_names(df):
+    return df.withColumn("name", upper(col("name")))
+
+# test_transformers.py
+def test_normalize_names(spark):
+    input_df = spark.createDataFrame([("alice",), ("bob",)], ["name"])
+    result = normalize_names(input_df)
+    names = [r.name for r in result.collect()]
+    assert names == ["ALICE", "BOB"]</div>
+
+<strong>Tools:</strong> pytest + chispa (DataFrame comparison library for Spark)
+<div class="code-block">pip install chispa
+# chispa gives readable diff when DataFrames don't match
+from chispa import assert_df_equality
+assert_df_equality(result_df, expected_df, ignore_nullable=True)</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   </div><!-- end qbank-content -->
+</div>
+
+<!-- ==================== AI / GENAI ==================== -->
+<div id="ai" class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(124,58,237,0.15)">🤖</div>
+    <div>
+      <div class="section-title">AI / GenAI Questions for Data Engineers</div>
+      <div class="section-desc">// The hottest new category in 2026 interviews — companies now expect DE candidates to know AI pipelines</div>
+    </div>
+  </div>
+
+  <div style="background:rgba(124,58,237,0.07);border:1px solid rgba(124,58,237,0.25);border-radius:10px;padding:16px 20px;margin-bottom:24px;font-size:13px;color:#c4b5fd;font-family:var(--mono);line-height:1.7;">
+    ⚡ <strong style="color:#a78bfa">WHY THIS MATTERS FOR YOU:</strong> Companies now want Data Engineers who can build <strong>AI-ready data pipelines</strong> — vector stores, embedding pipelines, RAG infrastructure, MLflow model tracking, and GenAI feature engineering. You don't need to be a data scientist, but you MUST understand how data flows into AI systems.
+  </div>
+
+  <!-- FOUNDATION -->
+  <div class="q-category">
+    <div class="q-cat-title" style="color:#a78bfa">🧱 AI Foundations for Data Engineers</div>
+    <div class="q-list">
+
+      <div class="q-item" data-tags="basic ai">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">AI1</span>
+          <span class="q-text">What is RAG (Retrieval-Augmented Generation) and why is it important for data engineers to understand?</span>
+          <div class="q-badges"><span class="badge badge-basic">Basic</span><span class="badge badge-trending">🔥 Must Know</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>RAG</strong> is a design pattern where an LLM's response is grounded in documents retrieved from a knowledge base at query time — rather than relying purely on the model's training data.
+
+<strong>Why it matters for Data Engineers:</strong>
+You build the data infrastructure that powers RAG:
+• <strong>Data ingestion pipeline:</strong> Extract text from PDFs, databases, APIs → chunk → embed → store in vector DB
+• <strong>Embedding pipeline:</strong> Transform text chunks into vector embeddings using a model (Azure OpenAI ada-002, etc.)
+• <strong>Vector store management:</strong> Manage Databricks Vector Search or Azure AI Search indexes
+• <strong>Delta Lake integration:</strong> Store documents + embeddings in Delta tables, ensure freshness with incremental updates
+• <strong>Monitoring:</strong> Track embedding freshness, retrieval latency, index drift
+
+<strong>RAG pipeline flow (DE perspective):</strong>
+<div class="code-block">Raw Docs (ADLS) → Chunking (Databricks) → Embedding (Azure OpenAI) → Vector Index (Databricks Vector Search / Azure AI Search) → LLM Query Time Retrieval → Response</div></div>
+          <div class="tip-box">🔥 "How would you build a document ingestion pipeline for a RAG system?" is being asked at product companies in 2026.</div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="mid ai">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">AI2</span>
+          <span class="q-text">What are embeddings? How does a data engineer manage an embedding pipeline at scale?</span>
+          <div class="q-badges"><span class="badge badge-mid">Mid</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Embeddings</strong> are dense numerical vector representations of text (or images) where semantically similar content maps to nearby points in high-dimensional space.
+
+<strong>Embedding pipeline architecture (Databricks-based):</strong>
+<div class="code-block">import openai
+from pyspark.sql.functions import udf
+from pyspark.sql.types import ArrayType, FloatType
+
+# Pandas UDF for batch embedding (efficient, vectorized)
+@pandas_udf(ArrayType(FloatType()))
+def embed_text(texts: pd.Series) -> pd.Series:
+    client = openai.AzureOpenAI(...)
+    results = []
+    for text in texts:
+        response = client.embeddings.create(input=text, model="text-embedding-ada-002")
+        results.append(response.data[0].embedding)
+    return pd.Series(results)
+
+# Apply to chunked documents DataFrame
+df_with_embeddings = df_chunks.withColumn("embedding", embed_text(col("chunk_text")))
+
+# Store in Delta (for lineage, versioning, reprocessing)
+df_with_embeddings.write.format("delta").mode("overwrite").save("/mnt/delta/embeddings")</div>
+
+<strong>Scale considerations:</strong>
+• Rate limit awareness: Azure OpenAI has TPM/RPM limits → implement retry with exponential backoff
+• Incremental updates: Only re-embed new/changed documents using Delta CDC
+• Cost: Track token usage per run (OpenAI charges per token)</div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="mid ai">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">AI3</span>
+          <span class="q-text">What is Databricks Vector Search? How does it integrate with Delta Lake and Unity Catalog?</span>
+          <div class="q-badges"><span class="badge badge-mid">Mid</span><span class="badge badge-trending">🔥 Trending</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Databricks Vector Search</strong> is a managed vector database built into the Databricks platform for storing and querying high-dimensional embeddings.
+
+<strong>Key capabilities:</strong>
+• Stores embeddings + source data together
+• Syncs automatically from a Delta table (delta sync index) — always fresh
+• Governed by Unity Catalog (access control, lineage)
+• Supports ANN (Approximate Nearest Neighbor) search
+• Integrates with Mosaic AI Model Serving and LangChain
+
+<div class="code-block">from databricks.vector_search.client import VectorSearchClient
+vsc = VectorSearchClient()
+
+# Create a delta-sync index (auto-updates when Delta table changes)
+vsc.create_delta_sync_index(
+    endpoint_name="my_vs_endpoint",
+    index_name="ml_catalog.features.doc_embeddings_index",
+    source_table_name="ml_catalog.features.doc_embeddings",  # Delta table
+    pipeline_type="TRIGGERED",
+    primary_key="doc_id",
+    embedding_dimension=1536,
+    embedding_vector_column="embedding"
+)
+
+# Query
+results = vsc.get_index("ml_catalog.features.doc_embeddings_index") \
+             .similarity_search(num_results=5, query_vector=query_embedding)</div></div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv ai">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">AI4</span>
+          <span class="q-text">What is Mosaic AI (formerly MLflow + Databricks AI)? What are its components relevant to a data engineer?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span><span class="badge badge-trending">🔥 Trending</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Mosaic AI</strong> is Databricks' unified AI platform for building, evaluating, and deploying GenAI + traditional ML applications on the Lakehouse.
+
+<strong>Components relevant to Data Engineers:</strong>
+
+<strong>1. MLflow:</strong> Experiment tracking, model registry, artifact storage
+<div class="code-block">import mlflow
+mlflow.start_run()
+mlflow.log_param("batch_size", 64)
+mlflow.log_metric("accuracy", 0.93)
+mlflow.log_artifact("model.pkl")
+mlflow.end_run()</div>
+
+<strong>2. Feature Store:</strong> Store and serve ML features (covered in Q26)
+
+<strong>3. Model Serving (Serverless):</strong> Deploy models as REST endpoints — DE role: build feature pipelines that feed real-time serving
+
+<strong>4. AI Playground / Prompt Engineering:</strong> Test LLM prompts with governed models
+
+<strong>5. Vector Search:</strong> Embedding storage and retrieval
+
+<strong>6. AI/BI (new 2025):</strong> Natural language → SQL → dashboard, powered by Databricks SQL + LLM
+
+<strong>DE's role in AI stack:</strong> Build clean, fresh, well-governed data that feeds all of the above — without good DE work, none of the AI components work well.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RAG PIPELINE -->
+  <div class="q-category">
+    <div class="q-cat-title" style="color:#a78bfa">🔍 RAG Pipeline Engineering</div>
+    <div class="q-list">
+
+      <div class="q-item" data-tags="mid ai">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">AI5</span>
+          <span class="q-text">What is chunking in a RAG pipeline? What chunking strategies exist and how do you choose?</span>
+          <div class="q-badges"><span class="badge badge-mid">Mid</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Chunking</strong> splits large documents into smaller segments before embedding, because:
+1. Embedding models have token limits (e.g., ada-002: 8191 tokens)
+2. Smaller, focused chunks produce better vector representations and improve retrieval precision
+
+<strong>Chunking strategies:</strong>
+
+<strong>1. Fixed-size chunking:</strong> Split every N characters/tokens with optional overlap
+<div class="code-block">from langchain.text_splitter import RecursiveCharacterTextSplitter
+splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+chunks = splitter.split_text(document_text)</div>
+Best for: uniform documents (e.g., logs, structured reports)
+
+<strong>2. Semantic chunking:</strong> Split at sentence/paragraph boundaries. Preserves meaning.
+Best for: articles, knowledge base docs, manuals.
+
+<strong>3. Recursive chunking:</strong> Tries to split on paragraphs → sentences → words → characters
+Best for: general purpose (most commonly used)
+
+<strong>4. Parent-child chunking:</strong> Store small chunks for retrieval, but pass larger parent context to LLM. Best retrieval precision + sufficient context.
+
+<strong>Choosing:</strong> Start with recursive + 512 tokens + 50 overlap. Evaluate retrieval quality, then tune.</div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv ai">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">AI6</span>
+          <span class="q-text">How do you build an incremental document ingestion pipeline for RAG that handles updates and deletions?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Challenge:</strong> Documents change, get deleted, or get new versions. The embedding index must stay fresh.
+
+<strong>Architecture using Delta Lake + Databricks Vector Search:</strong>
+<div class="code-block">Step 1 — Track document state in Bronze Delta table:
+  doc_id | source_path | content_hash | last_modified | status
+
+Step 2 — Detect changes (CDC-like):
+  - New docs: status='NEW'
+  - Changed: compare content_hash with previous run → status='UPDATED'
+  - Deleted: source file gone → status='DELETED'
+
+Step 3 — Process only changed docs:
+  new_or_updated = df.filter(col("status").isin(["NEW", "UPDATED"]))
+  deleted = df.filter(col("status") == "DELETED")
+
+Step 4 — Re-chunk + re-embed changed docs:
+  new_chunks = chunk_and_embed(new_or_updated)
+  
+Step 5 — MERGE into embeddings Delta table:
+  MERGE INTO embeddings_table AS t
+  USING new_chunks AS s ON t.chunk_id = s.chunk_id
+  WHEN MATCHED THEN UPDATE SET *
+  WHEN NOT MATCHED THEN INSERT *
+  
+  # Delete embeddings for deleted docs
+  DELETE FROM embeddings_table WHERE doc_id IN (deleted_ids)
+
+Step 6 — Databricks Vector Search delta-sync auto-picks up Delta changes</div>
+<div class="tip-box">This is exactly the kind of end-to-end design answer that impresses senior interviews at product companies.</div></div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv ai">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">AI7</span>
+          <span class="q-text">What is hybrid search in RAG? Why is it better than pure vector search?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Pure vector search:</strong> Retrieves semantically similar chunks based on embedding distance. Good for conceptual/paraphrase queries. Misses exact keyword matches.
+
+<strong>BM25 keyword search:</strong> Retrieves based on exact term frequency. Good for specific names, codes, product IDs. Misses semantic meaning.
+
+<strong>Hybrid search:</strong> Combines both — weighted blend of vector + BM25 scores. Best of both worlds.
+
+<div class="code-block"># Azure AI Search hybrid query example
+search_client.search(
+    search_text="invoice number INV-2024-001",  # BM25 component
+    vector_queries=[VectorizedQuery(
+        vector=query_embedding,
+        k_nearest_neighbors=50,
+        fields="content_vector"
+    )],  # Vector component
+    top=5
+)</div>
+
+<strong>When to use what:</strong>
+• Vector only: conceptual Q&A, "what is our return policy"
+• BM25 only: exact lookup, "find document INV-2024-001"
+• Hybrid: production RAG systems (use hybrid by default)
+
+<strong>Re-ranking:</strong> After hybrid retrieval, apply a cross-encoder re-ranker (e.g., Azure ML or Cohere Rerank) to score retrieved chunks against the query — improves precision significantly.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MLFLOW & MLOPS -->
+  <div class="q-category">
+    <div class="q-cat-title" style="color:#a78bfa">🔬 MLflow & MLOps for Data Engineers</div>
+    <div class="q-list">
+
+      <div class="q-item" data-tags="mid ai">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">AI8</span>
+          <span class="q-text">What is MLflow? What are experiments, runs, models, and the model registry?</span>
+          <div class="q-badges"><span class="badge badge-mid">Mid</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>MLflow</strong> is an open-source platform for managing the ML lifecycle — tracking experiments, packaging models, and deploying them.
+
+<strong>Key concepts:</strong>
+• <strong>Experiment:</strong> A logical grouping of runs (e.g., "churn_model_v2_training")
+• <strong>Run:</strong> A single execution — logs params, metrics, artifacts (model files, plots)
+• <strong>Model:</strong> Logged artifact with a flavor (sklearn, pyfunc, tensorflow, etc.)
+• <strong>Model Registry:</strong> Versioned store with lifecycle stages: None → Staging → Production → Archived
+• <strong>Model Serving:</strong> Deploy registered model as a REST endpoint
+
+<strong>Data Engineer's workflow:</strong>
+<div class="code-block">import mlflow
+
+with mlflow.start_run(run_name="feature_v3_xgboost"):
+    mlflow.log_param("n_estimators", 200)
+    mlflow.log_param("feature_set_version", "v3")
+    # ... train model ...
+    mlflow.log_metric("auc", 0.91)
+    mlflow.sklearn.log_model(model, "churn_model")
+    
+    # Register to model registry
+    mlflow.register_model("runs:/abc123/churn_model", "churn_prediction")</div></div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv ai">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">AI9</span>
+          <span class="q-text">What is training-serving skew and how do you prevent it in production ML pipelines?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Training-serving skew</strong> occurs when the features used to train a model differ (in logic, distribution, or timing) from features computed at serving time — causing model performance degradation in production.
+
+<strong>Causes:</strong>
+• Training uses historical batch features; serving uses real-time features computed differently
+• Data preprocessing logic duplicated (and diverges) in training notebook and serving code
+• Null handling, encoding, scaling differs between training and inference
+
+<strong>Prevention strategies:</strong>
+1. <strong>Feature Store (single source of truth):</strong> Same feature computation logic used at both training time and serving time
+2. <strong>Point-in-time correct joins:</strong> During training, look up features as of the label timestamp — not current values
+3. <strong>Log features at serving time:</strong> Write inference-time features to Delta for comparison with training features
+4. <strong>Data validation:</strong> Use Great Expectations or DLT expectations to validate feature distributions before training
+
+<div class="code-block"># Point-in-time join example (Feature Store handles this automatically)
+# Manual approach: join features as of each row's event timestamp
+training_df = fact_df.alias("f").join(
+    feature_df.alias("feat"),
+    (col("f.customer_id") == col("feat.customer_id")) &
+    (col("feat.valid_from") <= col("f.event_time")) &
+    (col("feat.valid_to") > col("f.event_time"))
+)</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- GENAI SCENARIOS -->
+  <div class="q-category">
+    <div class="q-cat-title" style="color:#a78bfa">🎯 GenAI Scenario Questions</div>
+    <div class="q-list">
+
+      <div class="q-item" data-tags="adv ai scenario">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">AI10</span>
+          <span class="q-text">🔥 SCENARIO: Design a pipeline to ingest 10,000 internal PDF documents into a RAG system on Azure + Databricks.</span>
+          <div class="q-badges"><span class="badge badge-scenario">Scenario</span><span class="badge badge-trending">🔥 Hot 2026</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>End-to-end architecture:</strong>
+
+<strong>1. Ingestion (Bronze):</strong>
+• PDFs stored in ADLS Gen2 container
+• ADF Event Trigger → fires when new PDF arrives → calls Databricks notebook via linked service
+• Auto Loader reads new files into Bronze Delta table
+
+<strong>2. Extraction & Chunking (Silver):</strong>
+<div class="code-block">import fitz  # PyMuPDF
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+def extract_and_chunk(pdf_bytes, doc_id):
+    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    full_text = " ".join([page.get_text() for page in doc])
+    splitter = RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=64)
+    chunks = splitter.split_text(full_text)
+    return [(doc_id, i, chunk) for i, chunk in enumerate(chunks)]</div>
+
+<strong>3. Embedding (Silver → Gold):</strong>
+• Pandas UDF calls Azure OpenAI text-embedding-ada-002 in batch
+• Rate limit handling: exponential backoff, batch size = 16
+• Write chunk_id, doc_id, chunk_text, embedding[] to Delta Gold table
+
+<strong>4. Vector Index:</strong>
+• Databricks Vector Search delta-sync index on Gold embeddings table
+• Unity Catalog governs access
+
+<strong>5. Freshness / Updates:</strong>
+• Daily ADF pipeline checks for new/modified PDFs using content hash
+• Only re-embeds changed docs (incremental)
+
+<strong>6. Monitoring:</strong>
+• Audit log Delta table tracks: doc_id, processed_at, chunk_count, embedding_tokens_used
+• Alert if embedding pipeline fails or token usage spikes</div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv ai">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">AI11</span>
+          <span class="q-text">What is the difference between RAG and fine-tuning an LLM? When would you recommend each?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>RAG (Retrieval-Augmented Generation):</strong>
+• Retrieves relevant documents at query time and injects them into the prompt
+• Knowledge lives OUTSIDE the model (in your vector DB / Delta)
+• Easy to update: just re-embed new documents, no retraining
+• Good for: dynamic/frequently changing data, private enterprise knowledge, traceability (can cite sources)
+• Cost: inference + embedding pipeline cost only
+
+<strong>Fine-tuning:</strong>
+• Adapts model weights on domain-specific data
+• Knowledge is BAKED INTO the model
+• Expensive to update: requires retraining when data changes
+• Good for: changing the model's STYLE/TONE (formal legal writing), teaching domain-specific formats, when you need consistent structured outputs
+• Cost: training cost (GPU hours) + inference
+
+<strong>Decision framework:</strong>
+<div class="code-block">IF data changes frequently OR need source citations → RAG
+IF need consistent output format/style → Fine-tuning
+IF need both accuracy + style → RAG + Fine-tuning together
+IF data is static and volume is small → Fine-tuning alone
+IF enterprise private docs + governance needed → RAG on Databricks Vector Search</div>
+
+<div class="tip-box">Most enterprise use cases in 2026 use RAG, not fine-tuning. Fine-tuning is expensive and hard to maintain.</div></div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv ai trending">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">AI12</span>
+          <span class="q-text">How would you build a data pipeline that feeds a real-time AI fraud detection model?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span><span class="badge badge-trending">🔥 Trending</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Architecture for real-time AI fraud detection:</strong>
+
+<strong>Stream Ingestion:</strong>
+Transaction events → Azure Event Hubs → Databricks Structured Streaming
+
+<strong>Real-time feature computation:</strong>
+<div class="code-block">txn_stream = spark.readStream.format("eventhubs").options(**ehConf).load()
+
+# Compute features in real-time: rolling aggregations
+features = (txn_stream
+  .withWatermark("txn_time", "30 seconds")
+  .groupBy(window("txn_time", "5 minutes"), "card_id")
+  .agg(
+    count("*").alias("txn_count_5m"),
+    sum("amount").alias("total_amount_5m"),
+    countDistinct("merchant_id").alias("unique_merchants_5m")
+  )
+)</div>
+
+<strong>Model scoring:</strong>
+<div class="code-block">import mlflow.pyfunc
+
+# Load model from registry (broadcast to executors for efficiency)
+model = mlflow.pyfunc.load_model("models:/fraud_model/Production")
+model_bc = spark.sparkContext.broadcast(model)
+
+@pandas_udf("double")
+def score_fraud(features: pd.DataFrame) -> pd.Series:
+    return pd.Series(model_bc.value.predict(features))</div>
+
+<strong>Alert pipeline:</strong>
+High-score transactions → Azure Event Hubs (alerts) → Logic App → fraud ops team notification
+
+<strong>Feedback loop (DE responsibility):</strong>
+Confirmed fraud labels → Bronze Delta → retrain pipeline → update model registry → automatic A/B deployment</div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="mid ai">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">AI13</span>
+          <span class="q-text">What is LLM hallucination? How does a data engineer help reduce it?</span>
+          <div class="q-badges"><span class="badge badge-mid">Mid</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>Hallucination</strong> = when an LLM generates confident-sounding but factually incorrect information, because it's generating text based on statistical patterns rather than verified facts.
+
+<strong>How Data Engineers help reduce hallucination:</strong>
+
+<strong>1. Build high-quality RAG pipelines:</strong> If the retrieval returns relevant, accurate documents, the LLM has real facts to work from → fewer hallucinations
+
+<strong>2. Chunk quality:</strong> Well-chunked documents with clean text (not OCR garbage) improve retrieval precision → model gets accurate context
+
+<strong>3. Metadata filtering:</strong> Add metadata (date, source, document_type) to embeddings so the retriever can filter to the right scope before semantic search
+
+<strong>4. Freshness:</strong> Stale documents in the vector store = outdated "facts" → ensure incremental embedding pipeline keeps index current
+
+<strong>5. Hybrid search:</strong> Exact keyword matching for factual lookups (product codes, names, IDs) ensures precise retrieval
+
+<strong>6. Feedback logging:</strong> Log LLM inputs/outputs to Delta → data scientists can identify retrieval failures and retrain/improve
+
+<div class="tip-box">The DE's job is to give the LLM "the right documents at the right time" — that's the core of preventing hallucination at the infrastructure level.</div></div>
+        </div>
+      </div>
+
+      <div class="q-item" data-tags="adv ai">
+        <div class="q-question" onclick="toggleQ(this.parentElement)">
+          <span class="q-num">AI14</span>
+          <span class="q-text">How do you evaluate a RAG pipeline's performance? What metrics do you track?</span>
+          <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+        </div>
+        <div class="q-answer">
+          <div class="q-answer-text"><strong>RAG evaluation operates at multiple levels:</strong>
+
+<strong>1. Retrieval quality metrics:</strong>
+• <strong>Recall@K:</strong> Did the right chunk appear in top-K results?
+• <strong>MRR (Mean Reciprocal Rank):</strong> How highly was the correct chunk ranked?
+• <strong>Context Precision:</strong> Of retrieved chunks, what % were actually relevant?
+
+<strong>2. Generation quality metrics:</strong>
+• <strong>Faithfulness:</strong> Is the answer grounded in retrieved context? (no hallucination)
+• <strong>Answer Relevance:</strong> Does the answer address the question?
+• <strong>Context Recall:</strong> Did the LLM use all relevant information from context?
+
+<strong>3. Frameworks:</strong>
+<div class="code-block"># RAGAS — open source RAG evaluation framework
+from ragas import evaluate
+from ragas.metrics import faithfulness, answer_relevancy, context_precision
+
+results = evaluate(
+    dataset=eval_dataset,  # questions, answers, retrieved_contexts, ground_truths
+    metrics=[faithfulness, answer_relevancy, context_precision]
+)
+
+# MLflow Integration: log RAG eval scores as metrics
+mlflow.log_metrics(results.to_pandas().mean().to_dict())</div>
+
+<strong>4. DE operational metrics (log to Delta):</strong>
+• Retrieval latency (p50, p95, p99)
+• Embedding freshness (hours since last sync)
+• Query volume over time
+• User feedback scores (thumbs up/down)</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
 </div>
 
 <!-- ==================== SCENARIO ==================== -->
@@ -1553,6 +3482,512 @@ base.write.format("delta").mode("overwrite") \
   </div>
 </div>
 
+<!-- ==================== AI / GENAI ==================== -->
+<div id="ai" class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(124,58,237,0.1)">🤖</div>
+    <div>
+      <div class="section-title">AI & GenAI Questions for Data Engineers</div>
+      <div class="section-desc">// The new frontier — companies are asking these in 2026 senior ADE interviews</div>
+    </div>
+  </div>
+
+  <div style="background:rgba(124,58,237,0.07);border:1px solid rgba(124,58,237,0.2);border-radius:10px;padding:16px 20px;margin-bottom:28px;font-size:13px;color:#c4b5fd;font-family:var(--mono);">
+    ⚡ WHY THIS MATTERS: Companies are now expecting senior Data Engineers to understand how to build data pipelines that feed AI/ML systems — including LLM pipelines, RAG architectures, vector databases, and MLOps. You don't need to be a data scientist, but you need to know the <strong>data infrastructure side of AI</strong>.
+  </div>
+
+  <div class="q-list">
+
+    <!-- FUNDAMENTALS -->
+    <div class="q-cat-title" style="margin-bottom:12px">🧩 AI/ML Fundamentals for Data Engineers</div>
+
+    <div class="q-item" data-tags="basic ai">
+      <div class="q-question" onclick="toggleQ(this.parentElement)">
+        <span class="q-num">AI-1</span>
+        <span class="q-text">What is RAG (Retrieval-Augmented Generation)? Explain it like you'd design the data pipeline for it.</span>
+        <div class="q-badges"><span class="badge badge-mid">Mid</span><span class="badge badge-trending">🔥 Hot</span></div>
+      </div>
+      <div class="q-answer">
+        <div class="q-answer-text"><strong>RAG</strong> is an architecture where an LLM's responses are enhanced by retrieving relevant documents from a knowledge base at query time — instead of relying solely on the model's training data.
+
+<strong>As a Data Engineer, you own the data pipeline side:</strong>
+
+<strong>Offline pipeline (build the knowledge base):</strong>
+<div class="code-block">1. Ingest documents (PDFs, Word docs, web pages, DBs) → ADLS Bronze
+2. Chunk documents into segments (e.g., 512 token chunks with 50-token overlap)
+3. Generate embeddings via Azure OpenAI Embeddings API (text-embedding-ada-002)
+4. Store embeddings + metadata in a Vector Database (Azure AI Search, Pinecone, Chroma)
+5. Schedule re-ingestion pipeline for document updates (ADF + Databricks)</div>
+
+<strong>Online pipeline (answer queries):</strong>
+<div class="code-block">User query → Embed query → Vector similarity search (top-k chunks)
+→ Inject retrieved chunks into LLM prompt context
+→ LLM generates grounded response (with citations)</div>
+
+<strong>Your DE responsibilities:</strong>
+• Build scalable, incremental document ingestion pipelines
+• Manage embedding refresh when source documents update
+• Monitor vector index health and retrieval quality
+• Handle PII scrubbing before documents enter the vector store</div>
+      </div>
+    </div>
+
+    <div class="q-item" data-tags="mid ai">
+      <div class="q-question" onclick="toggleQ(this.parentElement)">
+        <span class="q-num">AI-2</span>
+        <span class="q-text">What is a vector database? How is it different from a relational database? Name the options on Azure.</span>
+        <div class="q-badges"><span class="badge badge-mid">Mid</span><span class="badge badge-trending">🔥 Hot</span></div>
+      </div>
+      <div class="q-answer">
+        <div class="q-answer-text"><strong>Vector database</strong> stores high-dimensional numerical vectors (embeddings) and enables fast similarity search — finding vectors "closest" to a query vector using metrics like cosine similarity or Euclidean distance.
+
+<strong>Relational DB vs Vector DB:</strong>
+• Relational: stores structured rows/columns, queries use exact match (WHERE id = 5)
+• Vector DB: stores embeddings, queries find semantically similar items (nearest-neighbor search)
+
+<strong>How embeddings work:</strong>
+<div class="code-block"># "Azure Data Factory pipeline" → embedding model → [0.23, -0.41, 0.87, ...]  (1536 dims)
+# "ADF pipeline tutorial"        → embedding model → [0.21, -0.39, 0.85, ...]  (very similar!)
+# Similarity search finds these as "close" even though no exact word match</div>
+
+<strong>Vector DB options on Azure:</strong>
+• <strong>Azure AI Search</strong> (formerly Cognitive Search) — Microsoft native, hybrid search (vector + keyword BM25), integrates with Azure OpenAI natively. Best for enterprise Azure stacks.
+• <strong>Databricks Vector Search</strong> — built into Unity Catalog, syncs from Delta tables automatically
+• <strong>PostgreSQL with pgvector extension</strong> — if already using Azure Database for PostgreSQL
+• <strong>Pinecone, Weaviate, Qdrant</strong> — third-party, hosted separately</div>
+      </div>
+    </div>
+
+    <div class="q-item" data-tags="mid ai">
+      <div class="q-question" onclick="toggleQ(this.parentElement)">
+        <span class="q-num">AI-3</span>
+        <span class="q-text">What is MLflow? What does a Data Engineer do with it vs a Data Scientist?</span>
+        <div class="q-badges"><span class="badge badge-mid">Mid</span></div>
+      </div>
+      <div class="q-answer">
+        <div class="q-answer-text"><strong>MLflow</strong> is an open-source MLOps platform (built into Databricks) for tracking experiments, packaging models, and managing the model lifecycle.
+
+<strong>MLflow components:</strong>
+• <strong>Tracking:</strong> Log metrics, parameters, artifacts per experiment run
+• <strong>Model Registry:</strong> Versioned model storage with staging/production/archived stages
+• <strong>Projects:</strong> Reproducible packaging of ML code
+• <strong>Models:</strong> Standard model format for deployment
+
+<strong>Data Engineer's role:</strong>
+<div class="code-block"># DE builds feature pipelines that feed model training
+# DE manages model serving infrastructure
+
+# Register model to MLflow (done by DE as part of retraining pipeline)
+import mlflow
+
+mlflow.set_experiment("/Shared/churn_model")
+with mlflow.start_run():
+    # Train model...
+    mlflow.log_param("n_estimators", 100)
+    mlflow.log_metric("auc", 0.87)
+    mlflow.sklearn.log_model(model, "model",
+        registered_model_name="churn_classifier")</div>
+
+<strong>DE responsibilities in MLOps:</strong>
+• Build feature pipelines that write to Feature Store
+• Schedule model retraining jobs in Databricks Workflows
+• Monitor model drift by comparing prediction distributions over time
+• Manage model promotion: Staging → Production in MLflow registry</div>
+      </div>
+    </div>
+
+    <div class="q-cat-title" style="margin: 24px 0 12px">🏗️ Building AI Pipelines — Data Engineer's Angle</div>
+
+    <div class="q-item" data-tags="adv ai trending">
+      <div class="q-question" onclick="toggleQ(this.parentElement)">
+        <span class="q-num">AI-4</span>
+        <span class="q-text">Design a data pipeline to build and maintain a RAG knowledge base on Azure using Databricks + Azure AI Search.</span>
+        <div class="q-badges"><span class="badge badge-adv">Advanced</span><span class="badge badge-trending">🔥 Hot</span></div>
+      </div>
+      <div class="q-answer">
+        <div class="q-answer-text"><strong>Full pipeline design:</strong>
+
+<strong>Ingestion (Bronze):</strong>
+<div class="code-block">Source docs (SharePoint, Blob, Web) → ADF Copy → ADLS Bronze (raw PDFs/HTML/text)</div>
+
+<strong>Processing (Silver — Databricks job):</strong>
+<div class="code-block">from langchain.text_splitter import RecursiveCharacterTextSplitter
+import openai
+
+# 1. Extract text from PDFs
+text = extract_text_from_pdf(pdf_bytes)
+
+# 2. Chunk text semantically
+splitter = RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=50)
+chunks = splitter.split_text(text)
+
+# 3. Generate embeddings via Azure OpenAI
+embeddings = [
+    openai.Embedding.create(input=chunk, model="text-embedding-ada-002")["data"][0]["embedding"]
+    for chunk in chunks
+]
+
+# 4. Write to Delta table (Silver)
+chunk_df = spark.createDataFrame([
+    (doc_id, i, chunk, embedding, source_url, doc_date)
+    for i, (chunk, embedding) in enumerate(zip(chunks, embeddings))
+], ["doc_id", "chunk_id", "text", "embedding", "source_url", "doc_date"])
+
+chunk_df.write.format("delta").mode("append").save("/mnt/silver/embeddings")</div>
+
+<strong>Indexing (Gold — sync to Azure AI Search):</strong>
+<div class="code-block"># Use Databricks Vector Search OR push to Azure AI Search index
+# Delta table → Azure AI Search via Databricks connector or ADF
+
+# Incremental refresh: use Delta CDF to detect new/changed chunks
+changes = spark.read.format("delta").option("readChangeFeed", "true") \
+    .option("startingVersion", last_version).load("/mnt/silver/embeddings")</div>
+
+<strong>Monitoring:</strong>
+• Track retrieval quality: log which chunks are returned per query
+• Monitor embedding freshness: alert if source docs updated but not re-embedded
+• PII check: scan chunks before indexing using Azure AI Content Safety</div>
+      </div>
+    </div>
+
+    <div class="q-item" data-tags="adv ai">
+      <div class="q-question" onclick="toggleQ(this.parentElement)">
+        <span class="q-num">AI-5</span>
+        <span class="q-text">What is fine-tuning vs RAG? As a data engineer, what data pipeline would you build for each?</span>
+        <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+      </div>
+      <div class="q-answer">
+        <div class="q-answer-text"><strong>RAG:</strong> Keeps the LLM frozen. Provides relevant context at query time from a knowledge base. Good for: dynamic/frequently updated knowledge, private company data, fact-grounding.
+
+<strong>Fine-tuning:</strong> Trains the LLM on domain-specific examples to change its behavior/style/knowledge permanently. Good for: teaching a new output format, specialized domain language, consistent response style.
+
+<strong>Data pipeline for RAG (DE owns):</strong>
+<div class="code-block">Raw docs → Text extraction → Chunking → Embedding → Vector store → Incremental refresh pipeline</div>
+
+<strong>Data pipeline for Fine-tuning (DE owns the data prep):</strong>
+<div class="code-block"># Fine-tuning requires (prompt, completion) pairs in JSONL format
+{"prompt": "Classify this support ticket: 'App crashes on login'", "completion": "bug_report"}
+{"prompt": "Classify this support ticket: 'How do I reset password?'", "completion": "account_help"}
+
+# DE pipeline:
+# 1. Extract labeled examples from CRM/ticketing system (Salesforce/Jira)
+# 2. Clean, deduplicate, balance classes
+# 3. Format as JSONL
+# 4. Quality check: remove PII, filter low-quality labels
+# 5. Upload to Azure OpenAI fine-tuning API or HuggingFace training job</div>
+
+<strong>When to use which:</strong> RAG first (faster, cheaper, updatable). Fine-tune only when RAG doesn't achieve required accuracy or you need behavior change (not just knowledge).</div>
+      </div>
+    </div>
+
+    <div class="q-item" data-tags="adv ai trending">
+      <div class="q-question" onclick="toggleQ(this.parentElement)">
+        <span class="q-num">AI-6</span>
+        <span class="q-text">What is Databricks Vector Search? How does it differ from external vector databases?</span>
+        <div class="q-badges"><span class="badge badge-adv">Advanced</span><span class="badge badge-trending">🔥 2026 Hot</span></div>
+      </div>
+      <div class="q-answer">
+        <div class="q-answer-text"><strong>Databricks Vector Search</strong> is a built-in serverless vector database in Databricks, governed by Unity Catalog, that automatically syncs from Delta tables.
+
+<strong>Key advantages over external vector DBs:</strong>
+• Auto-sync: create an index on a Delta table → automatically stays in sync as table updates (no manual pipeline to push embeddings)
+• Unity Catalog governance: same access controls as your Delta tables apply to the vector index
+• No extra infrastructure: no Pinecone/Weaviate account — it's inside Databricks
+• Supports hybrid search: vector similarity + metadata filtering in one query
+
+<div class="code-block">from databricks.vector_search.client import VectorSearchClient
+
+client = VectorSearchClient()
+
+# Create vector search endpoint
+client.create_endpoint(name="my_vs_endpoint", endpoint_type="STANDARD")
+
+# Create Delta Sync Index (auto-syncs from Delta table)
+client.create_delta_sync_index(
+    endpoint_name="my_vs_endpoint",
+    index_name="ml.rag.doc_embeddings_index",
+    source_table_name="ml.rag.doc_embeddings",
+    pipeline_type="TRIGGERED",
+    primary_key="chunk_id",
+    embedding_dimension=1536,
+    embedding_vector_column="embedding"
+)
+
+# Query
+results = client.get_index("ml.rag.doc_embeddings_index").similarity_search(
+    query_vector=query_embedding,
+    columns=["text", "source_url"],
+    num_results=5
+)</div></div>
+      </div>
+    </div>
+
+    <div class="q-item" data-tags="adv ai">
+      <div class="q-question" onclick="toggleQ(this.parentElement)">
+        <span class="q-num">AI-7</span>
+        <span class="q-text">How do you detect and handle model drift in a production ML pipeline?</span>
+        <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+      </div>
+      <div class="q-answer">
+        <div class="q-answer-text"><strong>Model drift</strong> = the model's predictions become less accurate over time because the real-world data distribution changes from what the model was trained on.
+
+<strong>Types of drift:</strong>
+• <strong>Data drift (covariate shift):</strong> Input feature distribution changes (e.g., customer age demographics shift)
+• <strong>Concept drift:</strong> The relationship between inputs and output changes (e.g., fraud patterns evolve)
+• <strong>Label drift:</strong> Distribution of target variable changes
+
+<strong>Detection pipeline (Data Engineer builds this):</strong>
+<div class="code-block"># 1. Log predictions + features to a Delta table (inference store)
+spark.write.format("delta").mode("append").save("/mnt/gold/model_predictions")
+
+# 2. Daily monitoring job: compare training feature stats vs live feature stats
+from pyspark.ml.stat import Correlation
+from scipy.stats import ks_2samp  # Kolmogorov-Smirnov test
+
+# KS test: checks if two distributions are significantly different
+ks_stat, p_value = ks_2samp(training_col, live_col)
+if p_value < 0.05:
+    alert("Data drift detected in feature: " + col_name)
+
+# 3. Track prediction distribution shift
+live_avg_score = predictions_df.filter("date = today").agg(avg("score")).collect()[0][0]
+# Alert if significantly different from baseline</div>
+
+<strong>Response:</strong>
+• Minor drift → monitor closely, no action
+• Moderate drift → trigger model retraining with recent data
+• Severe drift → pause model, investigate data pipeline for issues first, then retrain
+
+<strong>Tools:</strong> MLflow model monitoring, Azure ML Model Monitoring, Evidently AI (OSS)</div>
+      </div>
+    </div>
+
+    <div class="q-cat-title" style="margin: 24px 0 12px">🔧 Azure OpenAI & LLM Integration</div>
+
+    <div class="q-item" data-tags="mid ai trending">
+      <div class="q-question" onclick="toggleQ(this.parentElement)">
+        <span class="q-num">AI-8</span>
+        <span class="q-text">What is Azure OpenAI Service? How would you integrate it into a data pipeline?</span>
+        <div class="q-badges"><span class="badge badge-mid">Mid</span><span class="badge badge-trending">🔥 Hot</span></div>
+      </div>
+      <div class="q-answer">
+        <div class="q-answer-text"><strong>Azure OpenAI Service</strong> provides access to OpenAI models (GPT-4o, text-embedding-ada-002, DALL-E) via Azure — with enterprise features: private networking, data residency, RBAC, compliance.
+
+<strong>Integration in data pipelines:</strong>
+<div class="code-block">import openai
+
+# Configure for Azure OpenAI
+openai.api_type = "azure"
+openai.api_base = "https://your-resource.openai.azure.com/"
+openai.api_key = dbutils.secrets.get("openai-scope", "api-key")  # From Key Vault
+openai.api_version = "2024-02-01"
+
+# Use in PySpark UDF for batch enrichment
+import pandas as pd
+from pyspark.sql.functions import pandas_udf
+
+@pandas_udf("string")
+def classify_sentiment(texts: pd.Series) -> pd.Series:
+    results = []
+    for text in texts:
+        response = openai.ChatCompletion.create(
+            engine="gpt-4o",
+            messages=[{"role": "user", "content": f"Classify sentiment: {text}. Reply: positive/negative/neutral only."}],
+            max_tokens=10
+        )
+        results.append(response.choices[0].message.content.strip())
+    return pd.Series(results)
+
+# Apply to Silver table for AI enrichment
+df.withColumn("sentiment", classify_sentiment(col("review_text"))) \
+  .write.format("delta").mode("overwrite").save(gold_path)</div>
+
+<strong>Best practices:</strong>
+• Use Key Vault for API key — never hardcode
+• Implement exponential backoff for rate limit (429) errors
+• Batch API calls efficiently (don't call per row in a loop without pagination)
+• Monitor token usage and costs — log to Delta for cost attribution per pipeline</div>
+      </div>
+    </div>
+
+    <div class="q-item" data-tags="adv ai trending">
+      <div class="q-question" onclick="toggleQ(this.parentElement)">
+        <span class="q-num">AI-9</span>
+        <span class="q-text">SCENARIO: A RAG system is giving hallucinated or irrelevant answers. How do you debug and fix it as a Data Engineer?</span>
+        <div class="q-badges"><span class="badge badge-scenario">Scenario</span><span class="badge badge-adv">Advanced</span></div>
+      </div>
+      <div class="q-answer">
+        <div class="q-answer-text"><strong>Debugging RAG quality — Data Engineer's approach:</strong>
+
+<strong>Step 1 — Isolate which component is failing:</strong>
+• Is the <strong>retrieval bad</strong> (wrong chunks returned) or the <strong>generation bad</strong> (LLM given right chunks but still hallucinating)?
+• Test: manually run the vector search for a failing query → inspect returned chunks. Are they relevant?
+
+<strong>If retrieval is the problem:</strong>
+<div class="code-block"># Check 1: Are embeddings up to date?
+SELECT MAX(embedded_at) FROM ml.rag.doc_chunks  -- Is it stale?
+
+# Check 2: Is chunking strategy appropriate?
+# Too large chunks = vague embeddings = poor retrieval
+# Too small chunks = missing context = incomplete answers
+# Fix: try 256-512 token chunks with 20% overlap
+
+# Check 3: Try hybrid search (vector + keyword BM25)
+# Pure vector search misses exact keyword matches
+# Azure AI Search supports hybrid search natively
+
+# Check 4: Add a re-ranker
+# After retrieving top-20 by vector similarity, re-rank using a cross-encoder model
+# cross-encoder checks query-chunk relevance more precisely</div>
+
+<strong>If generation is the problem:</strong>
+• Add explicit instructions in system prompt: "Only answer based on the provided context. If the answer is not in the context, say 'I don't know'."
+• Add citation requirement: "For every claim, cite the source chunk."
+• Reduce temperature to 0 for factual queries
+
+<strong>Long-term monitoring pipeline:</strong> Log (query, retrieved_chunks, response) to Delta → daily evaluation job using LLM-as-a-judge to score faithfulness and relevance</div>
+      </div>
+    </div>
+
+    <div class="q-item" data-tags="adv ai">
+      <div class="q-question" onclick="toggleQ(this.parentElement)">
+        <span class="q-num">AI-10</span>
+        <span class="q-text">What is the difference between embeddings and traditional feature engineering? Why do data engineers need to understand embeddings?</span>
+        <div class="q-badges"><span class="badge badge-adv">Advanced</span></div>
+      </div>
+      <div class="q-answer">
+        <div class="q-answer-text"><strong>Traditional feature engineering:</strong> Manual, rule-based transformation of raw data into numerical features. Domain knowledge required. Time-consuming. Examples: one-hot encoding, TF-IDF, log transforms, interaction features.
+
+<strong>Embeddings:</strong> Dense vector representations learned by neural networks that capture semantic meaning. "Similar" concepts have vectors that are geometrically close. No manual feature design needed.
+<div class="code-block"># Traditional: one-hot encode product category (sparse, 500 dimensions)
+[0, 0, 1, 0, 0, ... 0]  # "electronics" 
+
+# Embedding: dense vector from model (captures meaning)
+[0.23, -0.14, 0.87, ...]  # "electronics" — semantically similar to "gadgets"</div>
+
+<strong>Why Data Engineers must understand embeddings in 2026:</strong>
+1. <strong>Pipeline design:</strong> Need to build embedding generation pipelines (batch + incremental)
+2. <strong>Storage:</strong> Embeddings are large (1536 floats × millions of records) — need efficient storage and indexing strategy
+3. <strong>Freshness:</strong> When source data updates, embeddings must be re-generated → schedule refresh pipelines
+4. <strong>Cost management:</strong> Azure OpenAI embedding API costs money per token — batch efficiently, cache aggressively
+5. <strong>Governance:</strong> Embeddings can leak PII/sensitive info — must scrub source data before embedding</div>
+      </div>
+    </div>
+
+    <div class="q-item" data-tags="adv ai trending">
+      <div class="q-question" onclick="toggleQ(this.parentElement)">
+        <span class="q-num">AI-11</span>
+        <span class="q-text">What is LLMOps? How does it differ from MLOps? What does a Data Engineer own in an LLMOps stack?</span>
+        <div class="q-badges"><span class="badge badge-adv">Advanced</span><span class="badge badge-trending">🔥 2026</span></div>
+      </div>
+      <div class="q-answer">
+        <div class="q-answer-text"><strong>MLOps:</strong> Operationalizing traditional ML models — feature pipelines, model training, versioning, A/B testing, drift monitoring, retraining.
+
+<strong>LLMOps:</strong> MLOps adapted for Large Language Models — additional concerns due to LLM scale, non-determinism, prompt-based interaction, and grounding needs.
+
+<strong>LLMOps-specific challenges:</strong>
+• Prompt versioning and management (prompts ARE code)
+• Hallucination evaluation (no simple accuracy metric)
+• Context window management and token cost optimization
+• RAG pipeline freshness and quality monitoring
+• Guardrails and safety filtering
+
+<strong>What Data Engineers own in LLMOps:</strong>
+<div class="code-block">✅ Data ingestion pipelines for knowledge bases (DE)
+✅ Embedding generation and vector index management (DE)
+✅ Feature Store for ML features used by LLM apps (DE)
+✅ Inference logging pipeline — log queries, responses, latency to Delta (DE)
+✅ Evaluation data pipeline — build ground truth datasets for LLM evaluation (DE)
+✅ Monitoring pipelines — track embedding freshness, retrieval quality, response latency (DE)
+✅ Cost monitoring — token usage, API costs per feature/team (DE)
+
+❌ Prompt engineering — typically ML Engineer or Data Scientist
+❌ Model fine-tuning — Data Scientist / ML Engineer
+❌ LLM deployment infrastructure — MLOps / Platform Engineer</div></div>
+      </div>
+    </div>
+
+    <div class="q-item" data-tags="adv ai">
+      <div class="q-question" onclick="toggleQ(this.parentElement)">
+        <span class="q-num">AI-12</span>
+        <span class="q-text">SCENARIO: Design a data pipeline that uses Azure OpenAI to auto-classify and enrich 10 million customer support tickets stored in ADLS.</span>
+        <div class="q-badges"><span class="badge badge-scenario">Scenario</span><span class="badge badge-adv">Advanced</span></div>
+      </div>
+      <div class="q-answer">
+        <div class="q-answer-text"><strong>Challenge:</strong> 10M tickets, LLM API has rate limits, need cost efficiency, results must be auditable.
+
+<strong>Architecture:</strong>
+<div class="code-block">ADLS (raw tickets) → Databricks batch job → Azure OpenAI API → Delta Gold (enriched tickets)</div>
+
+<strong>Key design decisions:</strong>
+
+<strong>1. Batch efficiently:</strong>
+<div class="code-block"># Don't call API per row — use Azure OpenAI Batch API (50% cost reduction vs real-time)
+# Or: use Pandas UDF to process in chunks within each Spark partition
+
+@pandas_udf("struct<category:string, priority:string, sentiment:string>")
+def classify_ticket(texts: pd.Series) -> pd.DataFrame:
+    # Batch 20 tickets per API call using system prompt list
+    results = call_openai_batch(texts.tolist(), batch_size=20)
+    return pd.DataFrame(results)</div>
+
+<strong>2. Handle rate limits:</strong>
+<div class="code-block">import time
+from tenacity import retry, stop_after_attempt, wait_exponential
+
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
+def call_openai_with_retry(prompt):
+    return openai.ChatCompletion.create(...)</div>
+
+<strong>3. Incremental processing:</strong>
+<div class="code-block"># Only process un-classified tickets
+unprocessed = spark.read.delta(tickets_path) \
+    .join(classified_df, "ticket_id", "left_anti")</div>
+
+<strong>4. Cost tracking:</strong>
+<div class="code-block"># Log token usage per run to Delta for cost attribution
+token_log_df.write.format("delta").mode("append").save("/mnt/gold/llm_cost_log")</div>
+
+<strong>5. Quality assurance:</strong>
+• Sample 1% of LLM classifications → human review → compute accuracy
+• Set confidence threshold — low-confidence predictions flagged for human review</div>
+      </div>
+    </div>
+
+    <div class="q-item" data-tags="mid ai">
+      <div class="q-question" onclick="toggleQ(this.parentElement)">
+        <span class="q-num">AI-13</span>
+        <span class="q-text">What is semantic chunking vs fixed-size chunking in RAG? When do you use each?</span>
+        <div class="q-badges"><span class="badge badge-mid">Mid</span></div>
+      </div>
+      <div class="q-answer">
+        <div class="q-answer-text"><strong>Fixed-size chunking:</strong> Split text every N tokens, optionally with overlap. Simple, fast, predictable.
+<div class="code-block">RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=50)</div>
+Downside: can split mid-sentence, breaking semantic meaning. Good for: structured, uniform documents.
+
+<strong>Semantic chunking:</strong> Split at meaningful boundaries — paragraphs, sections, topics. Keeps related information together.
+<div class="code-block">from langchain_experimental.text_splitter import SemanticChunker
+from langchain_openai.embeddings import AzureOpenAIEmbeddings
+
+splitter = SemanticChunker(AzureOpenAIEmbeddings())
+chunks = splitter.split_text(document_text)
+# Splits based on embedding similarity between sentences — new chunk when topic shifts</div>
+
+<strong>Trade-offs:</strong>
+| | Fixed-size | Semantic |
+|---|---|---|
+| Speed | Fast | Slow (needs embeddings) |
+| Quality | OK | Better retrieval |
+| Predictability | Consistent size | Variable size |
+| Cost | Low | Higher (embedding calls) |
+
+<strong>Recommendation:</strong> Start with recursive character splitting (fast, good enough). Use semantic chunking for high-quality production RAG where precision matters.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <!-- ==================== CHECKLIST ==================== -->
 <div id="checklist" class="section">
   <div class="section-header">
@@ -1578,9 +4013,16 @@ base.write.format("delta").mode("overwrite") \
         <div class="checklist-item" onclick="toggleCheck(this)"><div class="chk"></div><span>Structured Streaming: watermarking, checkpoints</span></div>
         <div class="checklist-item" onclick="toggleCheck(this)"><div class="chk"></div><span>ADLS Gen2: RBAC vs ACLs, Managed Identity</span></div>
         <div class="checklist-item" onclick="toggleCheck(this)"><div class="chk"></div><span>AQE (Adaptive Query Execution)</span></div>
+        <div class="checklist-item" onclick="toggleCheck(this)"><div class="chk"></div><span>Auto Loader vs COPY INTO</span></div>
+        <div class="checklist-item" onclick="toggleCheck(this)"><div class="chk"></div><span>Databricks Asset Bundles (DABs) for CI/CD</span></div>
+        <div class="checklist-item" onclick="toggleCheck(this)"><div class="chk"></div><span>RAG architecture: chunking → embedding → vector search</span></div>
+        <div class="checklist-item" onclick="toggleCheck(this)"><div class="chk"></div><span>Azure AI Search / Databricks Vector Search</span></div>
+        <div class="checklist-item" onclick="toggleCheck(this)"><div class="chk"></div><span>MLflow: tracking, model registry, Feature Store</span></div>
+        <div class="checklist-item" onclick="toggleCheck(this)"><div class="chk"></div><span>Azure OpenAI integration in pipelines</span></div>
+        <div class="checklist-item" onclick="toggleCheck(this)"><div class="chk"></div><span>Microsoft Fabric: OneLake, Direct Lake mode</span></div>
       </div>
       <div class="progress-wrap">
-        <div class="progress-label"><span>Progress</span><span id="prog-tech">0 / 12</span></div>
+        <div class="progress-label"><span>Progress</span><span id="prog-tech">0 / 19</span></div>
         <div class="progress-bar"><div class="progress-fill" id="fill-tech" style="width:0%"></div></div>
       </div>
     </div>
@@ -1763,7 +4205,7 @@ base.write.format("delta").mode("overwrite") \
 
   function updateProgress() {
     const groups = [
-      { parent: 'chk-technical', progId: 'prog-tech', fillId: 'fill-tech', total: 12 },
+      { parent: 'chk-technical', progId: 'prog-tech', fillId: 'fill-tech', total: 19 },
       { parent: 'chk-prep', progId: 'prog-prep', fillId: 'fill-prep', total: 8 },
       { parent: 'chk-job', progId: 'prog-job', fillId: 'fill-job', total: 7 },
     ];
